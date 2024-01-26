@@ -10,7 +10,13 @@ Command line tools to create entities in corvina in bulk
 
 ## Usage ##
 
-bla bla bla
+```bash
+npx corvina-seed@latest run \
+  --url https://app.corvina.fog:10443 \
+  --api-key YJa_IhKFn5oxndex8nc1kK4LfDwBCG0SwXPn3KvEQ2w \
+  --device-count 100 \
+  --device-group-count 100
+```
 
 ### Develop on this repo ###
 

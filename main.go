@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"corvina/corvina-seed/src/cmd"
 	"corvina/corvina-seed/src/utils"
 	"fmt"
@@ -50,10 +51,28 @@ func main() {
 					utils.VerboseLog()
 				}
 
+				c.Context = context.WithValue(c.Context, cmd.ApiKey, c.String("api-key"))
+				c.Context = context.WithValue(c.Context, cmd.DeviceCount, c.Int64("device-count"))
+
 				return cmd.Run(c.Context)
 			},
 			Flags: []cli.Flag{
 				verboseFlag,
+				&cli.StringFlag{
+					Name:    "api-key",
+					Aliases: []string{"k"},
+					Usage:   "Corvina API key",
+				},
+				&cli.Int64Flag{
+					Name:    "device-count",
+					Aliases: []string{"d"},
+					Usage:   "Number of devices to create",
+				},
+				&cli.Int64Flag{
+					Name:    "device-group-count",
+					Aliases: []string{"dg"},
+					Usage:   "Number of device groups to create",
+				},
 			},
 		},
 	}
