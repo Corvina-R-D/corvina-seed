@@ -42,6 +42,20 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Name:  "run",
+			Usage: "Start creating some entities in corvina if enough information is provided, otherwise it will start an interactive session",
+			Action: func(c *cli.Context) error {
+				if c.Bool("verbose") {
+					utils.VerboseLog()
+				}
+
+				return cmd.Run(c.Context)
+			},
+			Flags: []cli.Flag{
+				verboseFlag,
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
