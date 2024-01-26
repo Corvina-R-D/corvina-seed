@@ -37,7 +37,7 @@ func GetOrganizationMine(ctx context.Context) (dto.OrganizationOutDTO, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		return dto.OrganizationOutDTO{}, errors.New("Error retrieving organization. Status:" + resp.Status + ". Body: " + string(body))
+		return dto.OrganizationOutDTO{}, errors.New("error retrieving organization. Status:" + resp.Status + ". Body: " + string(body))
 	}
 
 	log.Trace().Str("body", string(body)).Msg("/svc/core/api/v1/organizations/mine response")
@@ -46,6 +46,14 @@ func GetOrganizationMine(ctx context.Context) (dto.OrganizationOutDTO, error) {
 	err = json.Unmarshal(body, &organizations)
 	if err != nil {
 		return dto.OrganizationOutDTO{}, err
+	}
+
+	if len(organizations) == 0 {
+		return dto.OrganizationOutDTO{}, errors.New("no organization found")
+	}
+
+	if len(organizations) > 1 {
+		return dto.OrganizationOutDTO{}, errors.New("more than one organization found")
 	}
 
 	return organizations[0], nil
