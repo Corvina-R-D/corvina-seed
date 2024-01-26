@@ -55,6 +55,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.ApiKey, c.String("api-key"))
 				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
+				c.Context = context.WithValue(c.Context, utils.ModelCount, c.Int64("model-count"))
 
 				return cmd.Run(c.Context)
 			},
@@ -72,6 +73,11 @@ func main() {
 					Aliases:  []string{"k"},
 					Usage:    "Corvina API key, the entities will be created into the organization associated with this key",
 					Required: true,
+				},
+				&cli.Int64Flag{
+					Name:    "model-count",
+					Aliases: []string{"m"},
+					Usage:   "Number of models to create",
 				},
 				&cli.Int64Flag{
 					Name:    "device-count",

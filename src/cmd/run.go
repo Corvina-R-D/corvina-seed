@@ -34,9 +34,16 @@ func Run(ctx context.Context) error {
 	}
 	log.Debug().Int64("device group count", deviceGroupCount).Msg("")
 
+	modelCount, err := takeCountFromCtx(ctx, utils.ModelCount)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("model count", modelCount).Msg("")
+
 	executeInput := dto.ExecuteInDTO{
 		DeviceCount:      deviceCount,
 		DeviceGroupCount: deviceGroupCount,
+		ModelCount:       modelCount,
 	}
 	err = seed.Execute(ctx, executeInput)
 	if err != nil {

@@ -28,6 +28,11 @@ func Execute(ctx context.Context, input dto.ExecuteInDTO) error {
 		return err
 	}
 
+	err = createModels(ctx, input, organization, rng)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -35,6 +40,38 @@ func createDeviceGroups(ctx context.Context, input dto.ExecuteInDTO, organizatio
 	for i := int64(0); i < input.DeviceGroupCount; i++ {
 		err := api.CreateDeviceGroup(ctx, organization.ID, api.CreateDeviceGroupInDTO{
 			Name: codename.Generate(rng, 4),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func createModels(ctx context.Context, input dto.ExecuteInDTO, organization dto.OrganizationOutDTO, rng *rand.Rand) error {
+	for i := int64(0); i < input.ModelCount; i++ {
+		name := codename.Generate(rng, 4) + ":1.0.0"
+		err := api.CreateModel(ctx, organization.ResourceID, api.CreateModelInDTO{
+			Name: name,
+			Data: api.CreateModelInDataDTO{
+				Type:       "object",
+				InstanceOf: name,
+				Properties: map[string]api.CreateModelInDataPropertiesDTO{
+					"temperature": {
+						Type: "double",
+					},
+					"humidity": {
+						Type: "boolean",
+					},
+					"description": {
+						Type: "string",
+					},
+				},
+				Label:       codename.Generate(rng, 4),
+				Unit:        "°C",
+				Description: codename.Generate(rng, 4),
+				Tags:        []string{codename.Generate(rng, 4), codename.Generate(rng, 4)},
+			},
 		})
 		if err != nil {
 			return err

@@ -50,10 +50,10 @@ func CreateDeviceGroup(ctx context.Context, organizationId int64, input CreateDe
 	}
 
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-		return errors.New("error retrieving organization. Status:" + resp.Status + ". Body: " + string(body))
+		return errors.New("error creating device group. Status:" + resp.Status + ". Body: " + string(body))
 	}
 
-	log.Trace().Str("body", string(body)).Msg("/svc/core/api/v1/organizations/mine response")
+	log.Trace().Str("body", string(body)).Msg("CreateDeviceGroup response")
 
 	return nil
 }
