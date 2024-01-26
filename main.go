@@ -51,10 +51,10 @@ func main() {
 					utils.VerboseLog()
 				}
 
-				c.Context = context.WithValue(c.Context, cmd.OriginKey, c.String("origin"))
-				c.Context = context.WithValue(c.Context, cmd.ApiKey, c.String("api-key"))
-				c.Context = context.WithValue(c.Context, cmd.DeviceCount, c.Int64("device-count"))
-				c.Context = context.WithValue(c.Context, cmd.DeviceGroupCount, c.Int64("device-group-count"))
+				c.Context = context.WithValue(c.Context, utils.OriginKey, c.String("origin"))
+				c.Context = context.WithValue(c.Context, utils.ApiKey, c.String("api-key"))
+				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
+				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
 
 				return cmd.Run(c.Context)
 			},

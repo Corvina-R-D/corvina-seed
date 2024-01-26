@@ -4,22 +4,16 @@ import (
 	"context"
 	"corvina/corvina-seed/src/seed"
 	"corvina/corvina-seed/src/seed/dto"
+	"corvina/corvina-seed/src/utils"
 	"errors"
 
 	"github.com/manifoldco/promptui"
 	"github.com/rs/zerolog/log"
 )
 
-type CtxKey string
-
-const OriginKey CtxKey = "origin"
-const ApiKey CtxKey = "api-key"
-const DeviceCount CtxKey = "device-count"
-const DeviceGroupCount CtxKey = "device-group-count"
-
 func Run(ctx context.Context) error {
 
-	origin := ctx.Value(OriginKey).(string)
+	origin := ctx.Value(utils.OriginKey).(string)
 	log.Debug().Str("origin", origin).Msg("")
 
 	apiKey, err := takeApiKeyFromCtxOrAskIt(ctx)
@@ -28,21 +22,19 @@ func Run(ctx context.Context) error {
 	}
 	log.Debug().Str("api key", apiKey).Msg("")
 
-	deviceCount, err := takeCountFromCtx(ctx, DeviceCount)
+	deviceCount, err := takeCountFromCtx(ctx, utils.DeviceCount)
 	if err != nil {
 		return err
 	}
 	log.Debug().Int64("device count", deviceCount).Msg("")
 
-	deviceGroupCount, err := takeCountFromCtx(ctx, DeviceGroupCount)
+	deviceGroupCount, err := takeCountFromCtx(ctx, utils.DeviceGroupCount)
 	if err != nil {
 		return err
 	}
 	log.Debug().Int64("device group count", deviceGroupCount).Msg("")
 
 	executeInput := dto.ExecuteInDTO{
-		Origin:           origin,
-		ApiKey:           apiKey,
 		DeviceCount:      deviceCount,
 		DeviceGroupCount: deviceGroupCount,
 	}
@@ -54,7 +46,7 @@ func Run(ctx context.Context) error {
 	return nil
 }
 
-func takeCountFromCtx(ctx context.Context, ctxKey CtxKey) (int64, error) {
+func takeCountFromCtx(ctx context.Context, ctxKey utils.CtxKey) (int64, error) {
 	val := ctx.Value(ctxKey)
 
 	if val == nil {
@@ -72,7 +64,7 @@ func takeCountFromCtx(ctx context.Context, ctxKey CtxKey) (int64, error) {
 }
 
 func takeApiKeyFromCtxOrAskIt(ctx context.Context) (string, error) {
-	apiKey := ctx.Value(ApiKey)
+	apiKey := ctx.Value(utils.ApiKey)
 
 	if apiKey == nil || apiKey == "" {
 		apiKey, err := askApiKey()
