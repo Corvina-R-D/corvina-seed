@@ -38,7 +38,7 @@ func Execute(ctx context.Context, input dto.ExecuteInDTO) error {
 
 func createDeviceGroups(ctx context.Context, input dto.ExecuteInDTO, organization dto.OrganizationOutDTO, rng *rand.Rand) error {
 	for i := int64(0); i < input.DeviceGroupCount; i++ {
-		err := api.CreateDeviceGroup(ctx, organization.ID, api.CreateDeviceGroupInDTO{
+		err := api.CreateDeviceGroup(ctx, organization.Id, api.CreateDeviceGroupInDTO{
 			Name: codename.Generate(rng, 4),
 		})
 		if err != nil {
@@ -51,9 +51,9 @@ func createDeviceGroups(ctx context.Context, input dto.ExecuteInDTO, organizatio
 func createModels(ctx context.Context, input dto.ExecuteInDTO, organization dto.OrganizationOutDTO, rng *rand.Rand) error {
 	for i := int64(0); i < input.ModelCount; i++ {
 		name := codename.Generate(rng, 4) + ":1.0.0"
-		err := api.CreateModel(ctx, organization.ResourceID, api.CreateModelInDTO{
+		output, err := api.CreateModel(ctx, organization.ResourceID, api.CreateModelInDTO{
 			Name: name,
-			Data: api.CreateModelInDataDTO{
+			Data: api.ModelDataDTO{
 				Type:       "object",
 				InstanceOf: name,
 				Properties: map[string]api.CreateModelInDataPropertiesDTO{
@@ -76,6 +76,8 @@ func createModels(ctx context.Context, input dto.ExecuteInDTO, organization dto.
 		if err != nil {
 			return err
 		}
+
+		log.Debug().Str("model.id", output.Id).Msg("Model created")
 	}
 	return nil
 }

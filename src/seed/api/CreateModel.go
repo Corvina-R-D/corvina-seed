@@ -16,7 +16,7 @@ type CreateModelInDataPropertiesDTO struct {
 	Type string `json:"type"`
 }
 
-type CreateModelInDataDTO struct {
+type ModelDataDTO struct {
 	Type        string                                    `json:"type"`
 	InstanceOf  string                                    `json:"instanceOf"`
 	Properties  map[string]CreateModelInDataPropertiesDTO `json:"properties"`
@@ -27,11 +27,18 @@ type CreateModelInDataDTO struct {
 }
 
 type CreateModelInDTO struct {
-	Name string               `json:"name"`
-	Data CreateModelInDataDTO `json:"data"`
+	Name string       `json:"name"`
+	Data ModelDataDTO `json:"data"`
 }
 
-func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInDTO) error {
+type CreateModelOutDTO struct {
+	Id      string       `json:"id"`
+	Name    string       `json:"name"`
+	Version string       `json:"version"`
+	Data    ModelDataDTO `json:"json"`
+}
+
+func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInDTO) (*CreateModelOutDTO, error) {
 	origin := ctx.Value(utils.OriginKey).(string)
 	apiKey := ctx.Value(utils.ApiKey).(string)
 
@@ -41,14 +48,14 @@ func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInD
 	enc := json.NewEncoder(&buf)
 
 	if err := enc.Encode(input); err != nil {
-		return err
+		return nil, err
 	}
 
 	log.Trace().Str("body", buf.String()).Msg("CreateModel request")
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, &buf)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Add("accept", "application/json")
@@ -57,19 +64,24 @@ func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInD
 
 	resp, err := utils.HttpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-		return errors.New("error creating model. Status:" + resp.Status + ". Body: " + string(body))
+		return nil, errors.New("error creating model. Status:" + resp.Status + ". Body: " + string(body))
 	}
 
 	log.Trace().Str("body", string(body)).Msg("CreateModel response")
 
-	return nil
+	var output CreateModelOutDTO
+	if err := json.Unmarshal(body, &output); err != nil {
+		return nil, err
+	}
+
+	return &output, nil
 }
