@@ -12,11 +12,15 @@ import (
 
 type CtxKey string
 
+const OriginKey CtxKey = "origin"
 const ApiKey CtxKey = "api-key"
 const DeviceCount CtxKey = "device-count"
 const DeviceGroupCount CtxKey = "device-group-count"
 
 func Run(ctx context.Context) error {
+
+	origin := ctx.Value(OriginKey).(string)
+	log.Debug().Str("origin", origin).Msg("")
 
 	apiKey, err := takeApiKeyFromCtxOrAskIt(ctx)
 	if err != nil {
@@ -37,6 +41,7 @@ func Run(ctx context.Context) error {
 	log.Debug().Int64("device group count", deviceGroupCount).Msg("")
 
 	executeInput := dto.ExecuteInDTO{
+		Origin:           origin,
 		ApiKey:           apiKey,
 		DeviceCount:      deviceCount,
 		DeviceGroupCount: deviceGroupCount,

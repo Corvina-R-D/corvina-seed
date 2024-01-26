@@ -51,6 +51,7 @@ func main() {
 					utils.VerboseLog()
 				}
 
+				c.Context = context.WithValue(c.Context, cmd.OriginKey, c.String("origin"))
 				c.Context = context.WithValue(c.Context, cmd.ApiKey, c.String("api-key"))
 				c.Context = context.WithValue(c.Context, cmd.DeviceCount, c.Int64("device-count"))
 				c.Context = context.WithValue(c.Context, cmd.DeviceGroupCount, c.Int64("device-group-count"))
@@ -59,6 +60,13 @@ func main() {
 			},
 			Flags: []cli.Flag{
 				verboseFlag,
+				&cli.StringFlag{
+					Name:        "origin",
+					Aliases:     []string{"o"},
+					Usage:       "Corvina origin",
+					DefaultText: "https://app.corvina.fog:10443",
+					Value:       "https://app.corvina.fog:10443",
+				},
 				&cli.StringFlag{
 					Name:    "api-key",
 					Aliases: []string{"k"},
