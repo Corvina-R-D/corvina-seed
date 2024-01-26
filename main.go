@@ -53,6 +53,7 @@ func main() {
 
 				c.Context = context.WithValue(c.Context, cmd.ApiKey, c.String("api-key"))
 				c.Context = context.WithValue(c.Context, cmd.DeviceCount, c.Int64("device-count"))
+				c.Context = context.WithValue(c.Context, cmd.DeviceGroupCount, c.Int64("device-group-count"))
 
 				return cmd.Run(c.Context)
 			},
