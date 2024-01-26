@@ -45,7 +45,7 @@ func Run(ctx context.Context) error {
 		DeviceGroupCount: deviceGroupCount,
 		ModelCount:       modelCount,
 	}
-	err = seed.Execute(ctx, executeInput)
+	err = seed.Execute(ctx, &executeInput)
 	if err != nil {
 		return err
 	}

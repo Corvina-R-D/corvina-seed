@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Execute(ctx context.Context, input dto.ExecuteInDTO) error {
+func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 
 	organization, err := api.GetOrganizationMine(ctx)
 	if err != nil {
@@ -36,7 +36,7 @@ func Execute(ctx context.Context, input dto.ExecuteInDTO) error {
 	return nil
 }
 
-func createDeviceGroups(ctx context.Context, input dto.ExecuteInDTO, organization dto.OrganizationOutDTO, rng *rand.Rand) error {
+func createDeviceGroups(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO, rng *rand.Rand) error {
 	for i := int64(0); i < input.DeviceGroupCount; i++ {
 		err := api.CreateDeviceGroup(ctx, organization.Id, api.CreateDeviceGroupInDTO{
 			Name: codename.Generate(rng, 4),
@@ -48,7 +48,7 @@ func createDeviceGroups(ctx context.Context, input dto.ExecuteInDTO, organizatio
 	return nil
 }
 
-func createModels(ctx context.Context, input dto.ExecuteInDTO, organization dto.OrganizationOutDTO, rng *rand.Rand) error {
+func createModels(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO, rng *rand.Rand) error {
 	for i := int64(0); i < input.ModelCount; i++ {
 		name := codename.Generate(rng, 4) + ":1.0.0"
 		output, err := api.CreateModel(ctx, organization.ResourceID, api.CreateModelInDTO{
