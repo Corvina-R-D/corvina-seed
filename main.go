@@ -68,9 +68,10 @@ func main() {
 					Value:       "https://app.corvina.fog:10443",
 				},
 				&cli.StringFlag{
-					Name:    "api-key",
-					Aliases: []string{"k"},
-					Usage:   "Corvina API key",
+					Name:     "api-key",
+					Aliases:  []string{"k"},
+					Usage:    "Corvina API key, the entities will be created into the organization associated with this key",
+					Required: true,
 				},
 				&cli.Int64Flag{
 					Name:    "device-count",
