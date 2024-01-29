@@ -122,7 +122,7 @@ func main() {
 				&cli.Int64Flag{
 					Name:    "device-count",
 					Aliases: []string{"d"},
-					Usage:   "Number of devices to create",
+					Usage:   "Number of devices to create (automatically creates device license)",
 				},
 				&cli.Int64Flag{
 					Name:    "device-group-count",
