@@ -33,6 +33,24 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		return err
 	}
 
+	err = createDevices(ctx, input, organization, rng)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createDevices(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO, rng *rand.Rand) error {
+	for i := int64(0); i < input.DeviceCount; i++ {
+		err := api.CreateDevice(ctx, organization.ResourceID, codename.Generate(rng, 4))
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Info().Int64("device count", input.DeviceCount).Msg("Devices created")
+
 	return nil
 }
 

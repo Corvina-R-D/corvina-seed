@@ -15,40 +15,39 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var masterTokenCache *dto.OpenIdConnectTokenOutDTO
+var licenseTokenCache *dto.OpenIdConnectTokenOutDTO
 
-func MasterToken(ctx context.Context) (*string, error) {
-	if masterTokenCache != nil {
-		return &masterTokenCache.AccessToken, nil
+func LicenseManagerToken(ctx context.Context) (*string, error) {
+	if licenseTokenCache != nil {
+		return &licenseTokenCache.AccessToken, nil
 	}
 
-	token, err := fetchMasterToken(ctx)
+	token, err := fetchLicenseManagerToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	masterTokenCache = token
+	licenseTokenCache = token
 
 	duration := time.Duration(utils.Percent(token.ExpiresIn, 0.9)) * time.Second
 	time.AfterFunc(duration, func() {
-		masterTokenCache = nil
+		licenseTokenCache = nil
 	})
 
 	return &token.AccessToken, nil
 }
 
-func fetchMasterToken(ctx context.Context) (*dto.OpenIdConnectTokenOutDTO, error) {
+func fetchLicenseManagerToken(ctx context.Context) (*dto.OpenIdConnectTokenOutDTO, error) {
 	keycloakOrigin := ctx.Value(utils.KeycloakOrigin).(string)
-	masterUser := ctx.Value(utils.KeycloakMasterUser).(string)
-	masterPass := ctx.Value(utils.KeycloakMasterPass).(string)
-
+	username := ctx.Value(utils.LicenseManagerUser).(string)
+	password := ctx.Value(utils.LicenseManagerPass).(string)
 	endpoint := keycloakOrigin + "/auth/realms/master/protocol/openid-connect/token"
 
 	formData := url.Values{}
-	formData.Set("username", masterUser)
-	formData.Set("password", masterPass)
+	formData.Set("username", username)
+	formData.Set("password", password)
 	formData.Set("grant_type", "password")
-	formData.Set("client_id", "admin-cli")
+	formData.Set("client_id", "license-manager")
 
 	requestBody := formData.Encode()
 
@@ -72,10 +71,10 @@ func fetchMasterToken(ctx context.Context) (*dto.OpenIdConnectTokenOutDTO, error
 	}
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return nil, errors.New("error fetching master token. Status:" + resp.Status + ". Body: " + string(body))
+		return nil, errors.New("error fetching license manager token. Status:" + resp.Status + ". Body: " + string(body))
 	}
 
-	log.Trace().Str("body", string(body)).Msg("MasterToken response")
+	log.Trace().Str("body", string(body)).Msg("LicenseManagerToken response")
 
 	output := dto.OpenIdConnectTokenOutDTO{}
 

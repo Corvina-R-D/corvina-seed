@@ -61,7 +61,11 @@ func main() {
 				}
 
 				c.Context = context.WithValue(c.Context, utils.OriginKey, c.String("origin"))
-				c.Context = context.WithValue(c.Context, utils.DomainKey, getDomainFromOrigin(c.String("origin")))
+				domain := getDomainFromOrigin(c.String("origin"))
+				c.Context = context.WithValue(c.Context, utils.DomainKey, domain)
+				c.Context = context.WithValue(c.Context, utils.LicenseHostKey, "https://app."+domain+"/svc/license")
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerUser, c.String("license-manager-user"))
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerPass, c.String("license-manager-pass"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
 				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
@@ -124,6 +128,20 @@ func main() {
 					Name:    "device-group-count",
 					Aliases: []string{"dg"},
 					Usage:   "Number of device groups to create",
+				},
+				&cli.StringFlag{
+					Name:        "license-manager-user",
+					Aliases:     []string{"lmu"},
+					Usage:       "License manager user",
+					DefaultText: "license-admin",
+					Value:       "license-admin",
+				},
+				&cli.StringFlag{
+					Name:        "license-manager-pass",
+					Aliases:     []string{"lmp"},
+					Usage:       "License manager password",
+					DefaultText: "license-admin",
+					Value:       "license-admin",
 				},
 			},
 		},
