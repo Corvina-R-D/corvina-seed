@@ -45,6 +45,9 @@ func createDeviceGroups(ctx context.Context, input *dto.ExecuteInDTO, organizati
 			return err
 		}
 	}
+
+	log.Info().Int64("device group count", input.DeviceGroupCount).Msg("Device groups created")
+
 	return nil
 }
 
@@ -79,5 +82,8 @@ func createModels(ctx context.Context, input *dto.ExecuteInDTO, organization *dt
 
 		log.Debug().Str("model.id", output.Id).Msg("Model created")
 	}
+
+	log.Info().Int64("model count", input.ModelCount).Msg("Models created")
+
 	return nil
 }
