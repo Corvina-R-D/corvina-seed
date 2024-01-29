@@ -6,6 +6,7 @@ import (
 	"corvina/corvina-seed/src/utils"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	cli "github.com/urfave/cli/v2"
@@ -15,6 +16,14 @@ var verboseFlag *cli.BoolFlag = &cli.BoolFlag{
 	Name:    "verbose",
 	Aliases: []string{"v"},
 	Usage:   "Enable verbose mode",
+}
+
+func getDomainFromOrigin(origin string) string {
+	return strings.Replace(origin, "https://app.", "", 1)
+}
+
+func getUserRealmFromAdminUser(adminUser string) string {
+	return strings.Split(adminUser, "@")[1]
 }
 
 func main() {
@@ -52,7 +61,12 @@ func main() {
 				}
 
 				c.Context = context.WithValue(c.Context, utils.OriginKey, c.String("origin"))
-				c.Context = context.WithValue(c.Context, utils.ApiKey, c.String("api-key"))
+				c.Context = context.WithValue(c.Context, utils.DomainKey, getDomainFromOrigin(c.String("origin")))
+				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
+				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
+				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
 				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
 				c.Context = context.WithValue(c.Context, utils.ModelCount, c.Int64("model-count"))
@@ -69,10 +83,32 @@ func main() {
 					Value:       "https://app.corvina.fog:10443",
 				},
 				&cli.StringFlag{
-					Name:     "api-key",
-					Aliases:  []string{"k"},
-					Usage:    "Corvina API key, the entities will be created into the organization associated with this key",
-					Required: true,
+					Name:        "keycloak-origin",
+					Aliases:     []string{"ko"},
+					Usage:       "Keycloak origin",
+					DefaultText: "https://auth.corvina.fog:10443",
+					Value:       "https://auth.corvina.fog:10443",
+				},
+				&cli.StringFlag{
+					Name:        "keycloak-master-user",
+					Aliases:     []string{"ku"},
+					Usage:       "Keycloak master user",
+					DefaultText: "keycloak-admin",
+					Value:       "keycloak-admin",
+				},
+				&cli.StringFlag{
+					Name:        "keycloak-master-pass",
+					Aliases:     []string{"kp"},
+					Usage:       "Keycloak master password",
+					DefaultText: "keycloak-admin",
+					Value:       "keycloak-admin",
+				},
+				&cli.StringFlag{
+					Name:        "admin-user",
+					Aliases:     []string{"au"},
+					Usage:       "Admin user",
+					DefaultText: "admin@exor",
+					Value:       "admin@exor",
 				},
 				&cli.Int64Flag{
 					Name:    "model-count",

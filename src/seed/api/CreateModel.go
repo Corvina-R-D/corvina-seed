@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"corvina/corvina-seed/src/seed/keycloak"
 	"corvina/corvina-seed/src/utils"
 	"encoding/json"
 	"errors"
@@ -40,7 +41,6 @@ type CreateModelOutDTO struct {
 
 func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInDTO) (*CreateModelOutDTO, error) {
 	origin := ctx.Value(utils.OriginKey).(string)
-	apiKey := ctx.Value(utils.ApiKey).(string)
 
 	url := origin + "/svc/mappings/api/v1/models?organization=" + orgResourceId
 
@@ -60,7 +60,11 @@ func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInD
 
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("X-Api-Key", apiKey)
+	token, err := keycloak.AdminToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+*token)
 
 	resp, err := utils.HttpClient.Do(req)
 	if err != nil {
@@ -72,7 +76,7 @@ func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInD
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return nil, errors.New("error creating model. Status:" + resp.Status + ". Body: " + string(body))
 	}
 

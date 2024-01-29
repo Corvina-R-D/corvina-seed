@@ -10,10 +10,21 @@ Command line tools to create entities in corvina in bulk
 
 ## Usage ##
 
-```bash
+<!-- ```bash
 npx corvina-seed@latest run \
   --origin https://app.corvina.fog:10443 \
   --api-key YJa_IhKFn5oxndex8nc1kK4LfDwBCG0SwXPn3KvEQ2w \
+  --device-count 100 \
+  --device-group-count 100
+``` -->
+
+```bash
+npx corvina-seed@latest run \
+  --origin https://app.corvina.fog:10443 \
+  --keycloak-origin https://auth.corvina.fog:10443 \
+  --keycloak-master-user keycloak-admin \
+  --keycloak-master-password keycloak-admin \
+  --admin-user admin@exor \
   --device-count 100 \
   --device-group-count 100
 ```

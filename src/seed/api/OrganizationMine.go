@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"corvina/corvina-seed/src/seed/dto"
+	"corvina/corvina-seed/src/seed/keycloak"
 	"corvina/corvina-seed/src/utils"
 	"encoding/json"
 	"errors"
@@ -14,7 +15,6 @@ import (
 
 func GetOrganizationMine(ctx context.Context) (*dto.OrganizationOutDTO, error) {
 	origin := ctx.Value(utils.OriginKey).(string)
-	apiKey := ctx.Value(utils.ApiKey).(string)
 
 	url := origin + "/svc/core/api/v1/organizations/mine"
 
@@ -24,7 +24,11 @@ func GetOrganizationMine(ctx context.Context) (*dto.OrganizationOutDTO, error) {
 	}
 
 	req.Header.Add("accept", "application/json")
-	req.Header.Add("X-Api-Key", apiKey)
+	token, err := keycloak.AdminToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+*token)
 
 	resp, err := utils.HttpClient.Do(req)
 	if err != nil {
@@ -36,7 +40,7 @@ func GetOrganizationMine(ctx context.Context) (*dto.OrganizationOutDTO, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("error retrieving organization. Status:" + resp.Status + ". Body: " + string(body))
 	}
 
