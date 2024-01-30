@@ -38,12 +38,22 @@ func Run(ctx context.Context) error {
 		DeviceGroupCount: deviceGroupCount,
 		ModelCount:       modelCount,
 	}
+
+	if !atLeastOneCountIsProvided(executeInput) {
+		utils.PrintlnYellow("No count provided, nothing to do, try --help to understand how to use it")
+		return nil
+	}
+
 	err = seed.Execute(ctx, &executeInput)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func atLeastOneCountIsProvided(counters dto.ExecuteInDTO) bool {
+	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0
 }
 
 func takeCountFromCtx(ctx context.Context, ctxKey utils.CtxKey) (int64, error) {
