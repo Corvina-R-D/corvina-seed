@@ -17,7 +17,7 @@ npx @corvina/corvina-seed@latest run \
   --origin https://app.corvina.fog:10443 \
   --keycloak-origin https://auth.corvina.fog:10443 \
   --keycloak-master-user keycloak-admin \
-  --keycloak-master-password keycloak-admin \
+  --keycloak-master-pass keycloak-admin \
   --admin-user admin@exor \
   --device-count 10 \
   --device-group-count 10
@@ -43,4 +43,3 @@ If you want to develop on this repo, you need to install the following softwares
 
 - [Node.js](https://nodejs.org/en/) (version 18+)
 - [Go](https://golang.org/) (version 1.20+)
-- [upx](https://upx.github.io/) (version 3.96+)

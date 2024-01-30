@@ -25,7 +25,4 @@ do
    		echo 'An error has occurred! Aborting the script execution...'
 		exit 1
 	fi
-
-	# compress using upx software
-	upx build/$output_name
 done
