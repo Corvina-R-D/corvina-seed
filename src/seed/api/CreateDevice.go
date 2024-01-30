@@ -3,11 +3,14 @@ package api
 import (
 	"bytes"
 	"context"
+	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/seed/keycloak"
 	"corvina/corvina-seed/src/utils"
+	"corvina/corvina-seed/src/utils/ref"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -27,6 +30,78 @@ func CreateDevice(ctx context.Context, orgResourceId string, name string) (err e
 
 	log.Info().Str("device name", name).Msg("Device license activated and device created")
 
+	eachDeviceHasMapping := ctx.Value(utils.EachDeviceHasMapping).(bool)
+
+	if !eachDeviceHasMapping {
+		return
+	}
+
+	model, err := CreateRandomModel(ctx, orgResourceId)
+	if err != nil {
+		return
+	}
+
+	data := model.Data
+	for key, prop := range data.Properties {
+		prop.Mode = ref.String("R")
+		prop.SendPolicy = &dto.SendPolicyDTO{
+			Triggers: []dto.TriggerDTO{
+				{
+					ChangeMask:        "value",
+					MinIntervalMs:     1000,
+					SkipFirstNChanges: 0,
+					Type:              "onchange",
+				},
+			},
+		}
+		prop.Datalink = &dto.DatalinkDTO{
+			Source: key,
+		}
+		prop.HistoryPolicy = &dto.HistoryPolicyDTO{
+			Enabled: true,
+		}
+		prop.Version = ref.String("1.0.0")
+		data.Properties[key] = prop
+	}
+	mapping, err := CreateMapping(ctx, orgResourceId, CreateModelInDTO{
+		Name: utils.RandomName(),
+		Data: data,
+	})
+	if err != nil {
+		return
+	}
+
+	log.Info().Interface("mapping", mapping).Msg("Mapping created")
+
+	device, err := TryGetDeviceNTimes(ctx, orgResourceId, name, uint8(20))
+	if err != nil {
+		return
+	}
+
+	log.Debug().Interface("device", device).Msg("Device found in mapping service")
+
+	err = SetDeviceMapping(ctx, &mapping.Id, &device.DeviceID)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func TryGetDeviceNTimes(ctx context.Context, orgResourceId string, name string, n uint8) (device *DeviceMappingServiceOutDTO, err error) {
+	for i := uint8(0); i < n; i++ {
+		device, err = GetDeviceFromMappingService(ctx, orgResourceId, name)
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			log.Warn().Uint8("i", i).Err(err).Msg("Device not found")
+			continue
+		}
+
+		log.Debug().Uint8("i", i).Interface("device", device).Msg("Device found")
+
+		return
+	}
+
 	return
 }
 
@@ -40,9 +115,15 @@ func activateDeviceLicense(ctx context.Context, activationKey string, deviceAlia
 		"orgResourceId": orgResourceId,
 	}
 
-	jsonPayload, _ := json.Marshal(payload)
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
 
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return
+	}
 	req.Header.Set("Content-Type", "application/json")
 	token, err := keycloak.AdminToken(ctx)
 	if err != nil {

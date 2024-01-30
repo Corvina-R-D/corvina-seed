@@ -72,6 +72,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
 				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
+				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, c.Bool("each-device-has-mapping"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
 				c.Context = context.WithValue(c.Context, utils.ModelCount, c.Int64("model-count"))
 
@@ -123,6 +124,13 @@ func main() {
 					Name:    "device-count",
 					Aliases: []string{"d"},
 					Usage:   "Number of devices to create (automatically creates device license)",
+				},
+				&cli.BoolFlag{
+					Name:        "each-device-has-mapping",
+					Usage:       "If true, this cli will create a model/mapping for each device created when --device-count is provided",
+					Aliases:     []string{"edm"},
+					DefaultText: "true",
+					Value:       true,
 				},
 				&cli.Int64Flag{
 					Name:    "device-group-count",

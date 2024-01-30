@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/seed/keycloak"
 	"corvina/corvina-seed/src/utils"
 	"encoding/json"
@@ -13,30 +14,42 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type CreateModelInDataPropertiesDTO struct {
-	Type string `json:"type"`
-}
-
-type ModelDataDTO struct {
-	Type        string                                    `json:"type"`
-	InstanceOf  string                                    `json:"instanceOf"`
-	Properties  map[string]CreateModelInDataPropertiesDTO `json:"properties"`
-	Label       string                                    `json:"label"`
-	Unit        string                                    `json:"unit"`
-	Description string                                    `json:"description"`
-	Tags        []string                                  `json:"tags"`
-}
-
 type CreateModelInDTO struct {
-	Name string       `json:"name"`
-	Data ModelDataDTO `json:"data"`
+	Name string         `json:"name"`
+	Data dto.IoTDataDTO `json:"data"`
 }
 
 type CreateModelOutDTO struct {
-	Id      string       `json:"id"`
-	Name    string       `json:"name"`
-	Version string       `json:"version"`
-	Data    ModelDataDTO `json:"json"`
+	Id      string         `json:"id"`
+	Name    string         `json:"name"`
+	Version string         `json:"version"`
+	Data    dto.IoTDataDTO `json:"json"`
+}
+
+func CreateRandomModel(ctx context.Context, orgResourceId string) (*CreateModelOutDTO, error) {
+	name := utils.RandomName() + ":1.0.0"
+	return CreateModel(ctx, orgResourceId, CreateModelInDTO{
+		Name: name,
+		Data: dto.IoTDataDTO{
+			Type:       "object",
+			InstanceOf: name,
+			Properties: map[string]dto.IoTDataPropertiesDTO{
+				"temperature": {
+					Type: "double",
+				},
+				"humidity": {
+					Type: "boolean",
+				},
+				"description": {
+					Type: "string",
+				},
+			},
+			Label:       utils.RandomName(),
+			Unit:        "°C",
+			Description: utils.RandomName(),
+			Tags:        []string{utils.RandomName(), utils.RandomName()},
+		},
+	})
 }
 
 func CreateModel(ctx context.Context, orgResourceId string, input CreateModelInDTO) (*CreateModelOutDTO, error) {

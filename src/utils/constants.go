@@ -5,6 +5,7 @@ type CtxKey string
 const OriginKey CtxKey = "origin"
 const DomainKey CtxKey = "domain"
 const DeviceCount CtxKey = "device-count"
+const EachDeviceHasMapping CtxKey = "each-device-has-mapping"
 const DeviceGroupCount CtxKey = "device-group-count"
 const ModelCount CtxKey = "model-count"
 const KeycloakOrigin CtxKey = "keycloak-host"
