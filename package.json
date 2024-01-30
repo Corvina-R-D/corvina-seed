@@ -1,0 +1,24 @@
+{
+  "name": "@corvina/corvina-seed",
+  "version": "1.0.0-rc.1",
+  "description": "Command line tools to create entities in corvina in bulk",
+  "bin": {
+    "create-corvina-app": "/bin/index.js"
+  },
+  "files": [
+    "/build",
+    "/bin/index.js"
+  ],
+  "scripts": {
+    "clean": "rm -rf main && rm -rf build/",
+    "build": "./cross-arch-compiler.sh",
+    "deploy": "npm publish --access public",
+    "prepublish": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "corvina"
+  ],
+  "homepage": "https://bitbucket.org/exorint/corvina-seed/src/master/",
+  "author": "Marcello Bellomi",
+  "license": "ISC"
+}
