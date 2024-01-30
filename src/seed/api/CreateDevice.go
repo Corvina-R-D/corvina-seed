@@ -93,7 +93,7 @@ func TryGetDeviceNTimes(ctx context.Context, orgResourceId string, name string, 
 		device, err = GetDeviceFromMappingService(ctx, orgResourceId, name)
 		if err != nil {
 			time.Sleep(1 * time.Second)
-			log.Warn().Uint8("i", i).Err(err).Msg("Device not found")
+			log.Info().Uint8("i", i).Err(err).Msg("Device not found")
 			continue
 		}
 

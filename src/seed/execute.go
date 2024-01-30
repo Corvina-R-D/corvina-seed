@@ -5,6 +5,7 @@ import (
 	"corvina/corvina-seed/src/seed/api"
 	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/utils"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 )
@@ -40,6 +41,10 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 }
 
 func createDevices(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO) error {
+	if input.DeviceCount == 0 {
+		return nil
+	}
+
 	for i := int64(0); i < input.DeviceCount; i++ {
 		err := api.CreateDevice(ctx, organization.ResourceID, utils.RandomName())
 		if err != nil {
@@ -47,12 +52,16 @@ func createDevices(ctx context.Context, input *dto.ExecuteInDTO, organization *d
 		}
 	}
 
-	log.Info().Int64("device count", input.DeviceCount).Msg("Devices created")
+	utils.PrintlnGreen(fmt.Sprintf("Devices created: %d", input.DeviceCount))
 
 	return nil
 }
 
 func createDeviceGroups(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO) error {
+	if input.DeviceGroupCount == 0 {
+		return nil
+	}
+
 	for i := int64(0); i < input.DeviceGroupCount; i++ {
 		err := api.CreateDeviceGroup(ctx, organization.Id, api.CreateDeviceGroupInDTO{
 			Name: utils.RandomName(),
@@ -62,12 +71,16 @@ func createDeviceGroups(ctx context.Context, input *dto.ExecuteInDTO, organizati
 		}
 	}
 
-	log.Info().Int64("device group count", input.DeviceGroupCount).Msg("Device groups created")
+	utils.PrintlnGreen(fmt.Sprintf("Device groups created: %d", input.DeviceGroupCount))
 
 	return nil
 }
 
 func createModels(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO) error {
+	if input.ModelCount == 0 {
+		return nil
+	}
+
 	for i := int64(0); i < input.ModelCount; i++ {
 		output, err := api.CreateRandomModel(ctx, organization.ResourceID)
 		if err != nil {
@@ -77,7 +90,7 @@ func createModels(ctx context.Context, input *dto.ExecuteInDTO, organization *dt
 		log.Debug().Str("model.id", output.Id).Msg("Model created")
 	}
 
-	log.Info().Int64("model count", input.ModelCount).Msg("Models created")
+	utils.PrintlnGreen(fmt.Sprintf("Models created: %d", input.ModelCount))
 
 	return nil
 }
