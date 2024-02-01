@@ -4,7 +4,6 @@ import (
 	"context"
 	"corvina/corvina-seed/src/cmd"
 	"corvina/corvina-seed/src/utils"
-	"fmt"
 	"os"
 	"strings"
 
@@ -16,6 +15,30 @@ var verboseFlag *cli.BoolFlag = &cli.BoolFlag{
 	Name:    "verbose",
 	Aliases: []string{"v"},
 	Usage:   "Enable verbose mode",
+}
+
+var keycloakFlags []*cli.StringFlag = []*cli.StringFlag{
+	&cli.StringFlag{
+		Name:        "keycloak-origin",
+		Aliases:     []string{"ko"},
+		Usage:       "Keycloak origin",
+		DefaultText: "https://auth.corvina.fog:10443",
+		Value:       "https://auth.corvina.fog:10443",
+	},
+	&cli.StringFlag{
+		Name:        "keycloak-master-user",
+		Aliases:     []string{"ku"},
+		Usage:       "Keycloak master user",
+		DefaultText: "keycloak-admin",
+		Value:       "keycloak-admin",
+	},
+	&cli.StringFlag{
+		Name:        "keycloak-master-pass",
+		Aliases:     []string{"kp"},
+		Usage:       "Keycloak master password",
+		DefaultText: "keycloak-admin",
+		Value:       "keycloak-admin",
+	},
 }
 
 func getDomainFromOrigin(origin string) string {
@@ -32,10 +55,8 @@ func main() {
 	app := &cli.App{
 		Name:  "corvina-seed",
 		Usage: "make an explosive entrance",
-		Action: func(*cli.Context) error {
-			fmt.Println(`List of available commands:
-	- version: Print the current cli version
-	- run: Start creating some entities in corvina if enough information is provided, otherwise it will start an interactive session`)
+		Action: func(c *cli.Context) error {
+			cli.ShowAppHelpAndExit(c, 0)
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -87,27 +108,9 @@ func main() {
 					DefaultText: "https://app.corvina.fog:10443",
 					Value:       "https://app.corvina.fog:10443",
 				},
-				&cli.StringFlag{
-					Name:        "keycloak-origin",
-					Aliases:     []string{"ko"},
-					Usage:       "Keycloak origin",
-					DefaultText: "https://auth.corvina.fog:10443",
-					Value:       "https://auth.corvina.fog:10443",
-				},
-				&cli.StringFlag{
-					Name:        "keycloak-master-user",
-					Aliases:     []string{"ku"},
-					Usage:       "Keycloak master user",
-					DefaultText: "keycloak-admin",
-					Value:       "keycloak-admin",
-				},
-				&cli.StringFlag{
-					Name:        "keycloak-master-pass",
-					Aliases:     []string{"kp"},
-					Usage:       "Keycloak master password",
-					DefaultText: "keycloak-admin",
-					Value:       "keycloak-admin",
-				},
+				keycloakFlags[0],
+				keycloakFlags[1],
+				keycloakFlags[2],
 				&cli.StringFlag{
 					Name:        "admin-user",
 					Aliases:     []string{"au"},
@@ -151,6 +154,27 @@ func main() {
 					DefaultText: "license-admin",
 					Value:       "license-admin",
 				},
+			},
+		},
+		{
+			Name:  "master-token",
+			Usage: "Get the master token for the keycloak master user",
+			Action: func(c *cli.Context) error {
+				if c.Bool("verbose") {
+					utils.VerboseLog()
+				}
+
+				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+
+				return cmd.MasterToken(c.Context)
+			},
+			Flags: []cli.Flag{
+				verboseFlag,
+				keycloakFlags[0],
+				keycloakFlags[1],
+				keycloakFlags[2],
 			},
 		},
 	}

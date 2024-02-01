@@ -12,6 +12,8 @@ Command line tools to create entities in corvina in bulk
 
 Example that creates 100 devices and 100 device groups in corvina.fog:
 
+### run ###
+
 ```bash
 npx @corvina/corvina-seed@latest run \
   --origin https://app.corvina.fog:10443 \
@@ -35,6 +37,14 @@ npx @corvina/corvina-seed@latest run \
   -lmp password \
   -d 10 \
   -dg 10
+```
+
+### master-token ###
+
+Echo the access token of the keycloak admin
+
+```bash
+npx @corvina/corvina-seed@latest master-token
 ```
 
 ### Develop on this repo ###
