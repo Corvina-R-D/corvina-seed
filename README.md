@@ -43,3 +43,4 @@ If you want to develop on this repo, you need to install the following softwares
 
 - [Node.js](https://nodejs.org/en/) (version 18+)
 - [Go](https://golang.org/) (version 1.20+)
+- [corvina-k8s] corvina compose up and running
