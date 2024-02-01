@@ -18,27 +18,43 @@ var verboseFlag *cli.BoolFlag = &cli.BoolFlag{
 }
 
 var keycloakFlags []*cli.StringFlag = []*cli.StringFlag{
-	&cli.StringFlag{
+	{
 		Name:        "keycloak-origin",
 		Aliases:     []string{"ko"},
 		Usage:       "Keycloak origin",
 		DefaultText: "https://auth.corvina.fog:10443",
 		Value:       "https://auth.corvina.fog:10443",
 	},
-	&cli.StringFlag{
+	{
 		Name:        "keycloak-master-user",
 		Aliases:     []string{"ku"},
 		Usage:       "Keycloak master user",
 		DefaultText: "keycloak-admin",
 		Value:       "keycloak-admin",
 	},
-	&cli.StringFlag{
+	{
 		Name:        "keycloak-master-pass",
 		Aliases:     []string{"kp"},
 		Usage:       "Keycloak master password",
 		DefaultText: "keycloak-admin",
 		Value:       "keycloak-admin",
 	},
+}
+
+var adminUserFlag *cli.StringFlag = &cli.StringFlag{
+	Name:        "admin-user",
+	Aliases:     []string{"au"},
+	Usage:       "Admin user",
+	DefaultText: "admin@exor",
+	Value:       "admin@exor",
+}
+
+var originFlag *cli.StringFlag = &cli.StringFlag{
+	Name:        "origin",
+	Aliases:     []string{"o"},
+	Usage:       "Corvina origin",
+	DefaultText: "https://app.corvina.fog:10443",
+	Value:       "https://app.corvina.fog:10443",
 }
 
 func getDomainFromOrigin(origin string) string {
@@ -101,23 +117,11 @@ func main() {
 			},
 			Flags: []cli.Flag{
 				verboseFlag,
-				&cli.StringFlag{
-					Name:        "origin",
-					Aliases:     []string{"o"},
-					Usage:       "Corvina origin",
-					DefaultText: "https://app.corvina.fog:10443",
-					Value:       "https://app.corvina.fog:10443",
-				},
+				originFlag,
 				keycloakFlags[0],
 				keycloakFlags[1],
 				keycloakFlags[2],
-				&cli.StringFlag{
-					Name:        "admin-user",
-					Aliases:     []string{"au"},
-					Usage:       "Admin user",
-					DefaultText: "admin@exor",
-					Value:       "admin@exor",
-				},
+				adminUserFlag,
 				&cli.Int64Flag{
 					Name:    "model-count",
 					Aliases: []string{"m"},
@@ -175,6 +179,34 @@ func main() {
 				keycloakFlags[0],
 				keycloakFlags[1],
 				keycloakFlags[2],
+			},
+		},
+		{
+			Name:  "admin-token",
+			Usage: "Get the token for the provided admin user",
+			Action: func(c *cli.Context) error {
+				if c.Bool("verbose") {
+					utils.VerboseLog()
+				}
+
+				c.Context = context.WithValue(c.Context, utils.OriginKey, c.String("origin"))
+				domain := getDomainFromOrigin(c.String("origin"))
+				c.Context = context.WithValue(c.Context, utils.DomainKey, domain)
+				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
+				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
+
+				return cmd.AdminToken(c.Context)
+			},
+			Flags: []cli.Flag{
+				verboseFlag,
+				originFlag,
+				keycloakFlags[0],
+				keycloakFlags[1],
+				keycloakFlags[2],
+				adminUserFlag,
 			},
 		},
 	}
