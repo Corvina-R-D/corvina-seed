@@ -105,6 +105,8 @@ func createOrganizations(ctx context.Context, input *dto.ExecuteInDTO, organizat
 		return nil
 	}
 
+	utils.PrintlnBlue(fmt.Sprintf("Creating organizations: %d with depth %d = %d", input.OrganizationCount, input.OrganizationTreeDepth, utils.PowInt64(input.OrganizationCount, input.OrganizationTreeDepth)))
+
 	err := createSubOrgRecursively(ctx, input, organizationId)
 	if err != nil {
 		return err
