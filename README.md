@@ -39,6 +39,20 @@ npx @corvina/corvina-seed@latest run \
   -dg 10
 ```
 
+Example that creates 10 sub organization tree in the users organization
+
+```bash
+npx @corvina/corvina-seed@latest run \
+  --origin https://app.corvina.mk \
+  -ko https://auth.corvina.mk \
+  -ku corvina-core-keycloak-admin \
+  -kp password \
+  -lmu corvina-license-manager-keycloak-admin \
+  -lmp password \
+  -org 10 \
+  -otd 3
+```
+
 ### master-token ###
 
 Echo the access token of the keycloak admin

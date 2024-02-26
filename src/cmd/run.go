@@ -33,10 +33,23 @@ func Run(ctx context.Context) error {
 	}
 	log.Debug().Int64("model count", modelCount).Msg("")
 
+	organizationCount, err := takeCountFromCtx(ctx, utils.OrganizationCount)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("organization count", organizationCount).Msg("")
+	organizationTreeDepth, err := takeCountFromCtx(ctx, utils.OrganizationTreeDepth)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("organization tree depth", organizationTreeDepth).Msg("")
+
 	executeInput := dto.ExecuteInDTO{
-		DeviceCount:      deviceCount,
-		DeviceGroupCount: deviceGroupCount,
-		ModelCount:       modelCount,
+		DeviceCount:           deviceCount,
+		DeviceGroupCount:      deviceGroupCount,
+		ModelCount:            modelCount,
+		OrganizationCount:     organizationCount,
+		OrganizationTreeDepth: organizationTreeDepth,
 	}
 
 	if !atLeastOneCountIsProvided(executeInput) {
@@ -53,7 +66,7 @@ func Run(ctx context.Context) error {
 }
 
 func atLeastOneCountIsProvided(counters dto.ExecuteInDTO) bool {
-	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0
+	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0 || counters.OrganizationCount > 0
 }
 
 func takeCountFromCtx(ctx context.Context, ctxKey utils.CtxKey) (int64, error) {

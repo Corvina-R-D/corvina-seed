@@ -112,6 +112,8 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, c.Bool("each-device-has-mapping"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
 				c.Context = context.WithValue(c.Context, utils.ModelCount, c.Int64("model-count"))
+				c.Context = context.WithValue(c.Context, utils.OrganizationCount, c.Int64("organization-count"))
+				c.Context = context.WithValue(c.Context, utils.OrganizationTreeDepth, c.Int64("organization-tree-depth"))
 
 				return cmd.Run(c.Context)
 			},
@@ -143,6 +145,18 @@ func main() {
 					Name:    "device-group-count",
 					Aliases: []string{"dg"},
 					Usage:   "Number of device groups to create",
+				},
+				&cli.Int64Flag{
+					Name:    "organization-count",
+					Aliases: []string{"org"},
+					Usage:   "Number of sub organizations to create in the admin user organization",
+				},
+				&cli.Int64Flag{
+					Name:        "organization-tree-depth",
+					Aliases:     []string{"otd"},
+					Usage:       "Depth of the organization tree to create in the admin user organization",
+					DefaultText: "1",
+					Value:       1,
 				},
 				&cli.StringFlag{
 					Name:        "license-manager-user",

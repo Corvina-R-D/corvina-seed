@@ -37,6 +37,11 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		return err
 	}
 
+	err = createOrganizations(ctx, input, organization.Id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -92,5 +97,50 @@ func createModels(ctx context.Context, input *dto.ExecuteInDTO, organization *dt
 
 	utils.PrintlnGreen(fmt.Sprintf("Models created: %d", input.ModelCount))
 
+	return nil
+}
+
+func createOrganizations(ctx context.Context, input *dto.ExecuteInDTO, organizationId int64) error {
+	if input.OrganizationCount == 0 {
+		return nil
+	}
+
+	err := createSubOrgRecursively(ctx, input, organizationId)
+	if err != nil {
+		return err
+	}
+
+	utils.PrintlnGreen(fmt.Sprintf("Organizations created: %d with depth %d", input.OrganizationCount, input.OrganizationTreeDepth))
+
+	return nil
+}
+
+func createSubOrgRecursively(ctx context.Context, input *dto.ExecuteInDTO, organizationId int64) error {
+	for i := int64(0); i < input.OrganizationCount; i++ {
+		createSubOrgInput := api.CreateOrganizationInDTO{
+			Name: utils.RandomName(),
+		}
+		subOrganization, err := api.CreateSubOrganization(ctx, organizationId, createSubOrgInput)
+		if err != nil {
+			return err
+		}
+		err = api.SetAllLimitToUnlimited(ctx, subOrganization.ResourceID)
+		if err != nil {
+			return err
+		}
+
+		log.Debug().Interface("organization", subOrganization.ResourceID).Msg("Organization created")
+
+		if input.OrganizationTreeDepth > 1 {
+			executeInput := &dto.ExecuteInDTO{
+				OrganizationCount:     input.OrganizationCount,
+				OrganizationTreeDepth: input.OrganizationTreeDepth - 1,
+			}
+			err = createSubOrgRecursively(ctx, executeInput, subOrganization.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
