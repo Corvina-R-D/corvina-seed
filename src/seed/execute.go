@@ -6,6 +6,7 @@ import (
 	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/utils"
 	"fmt"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 )
@@ -100,49 +101,93 @@ func createModels(ctx context.Context, input *dto.ExecuteInDTO, organization *dt
 	return nil
 }
 
+func calculateNumberOfOrganizations(input *dto.ExecuteInDTO) int64 {
+	sum := int64(0)
+
+	for i := int64(0); i <= input.OrganizationTreeDepth; i++ {
+		sum += utils.PowInt64(input.OrganizationCount, i)
+	}
+
+	return sum
+}
+
 func createOrganizations(ctx context.Context, input *dto.ExecuteInDTO, organizationId int64) error {
 	if input.OrganizationCount == 0 {
 		return nil
 	}
 
-	utils.PrintlnBlue(fmt.Sprintf("Creating organizations: %d with depth %d = %d", input.OrganizationCount, input.OrganizationTreeDepth, utils.PowInt64(input.OrganizationCount, input.OrganizationTreeDepth)))
+	totalOrganizations := calculateNumberOfOrganizations(input)
+	utils.PrintlnBlue(fmt.Sprintf("Creating organizations: %d with depth %d = %d", input.OrganizationCount, input.OrganizationTreeDepth, totalOrganizations))
 
-	err := createSubOrgRecursively(ctx, input, organizationId)
+	err := createSubOrgMultipleWorkers(ctx, input, organizationId)
 	if err != nil {
 		return err
 	}
 
-	utils.PrintlnGreen(fmt.Sprintf("Organizations created: %d with depth %d", input.OrganizationCount, input.OrganizationTreeDepth))
+	utils.PrintlnGreen(fmt.Sprintf("Organizations created: %d", totalOrganizations))
 
 	return nil
 }
 
-func createSubOrgRecursively(ctx context.Context, input *dto.ExecuteInDTO, organizationId int64) error {
-	for i := int64(0); i < input.OrganizationCount; i++ {
-		createSubOrgInput := api.CreateOrganizationInDTO{
-			Name: utils.RandomName(),
-		}
-		subOrganization, err := api.CreateSubOrganization(ctx, organizationId, createSubOrgInput)
-		if err != nil {
-			return err
-		}
-		err = api.SetAllLimitToUnlimited(ctx, subOrganization.ResourceID)
-		if err != nil {
-			return err
-		}
+type WorkerDTO struct {
+	depth  int64
+	parent int64
+}
 
-		log.Debug().Interface("organization", subOrganization.ResourceID).Msg("Organization created")
+func createSubOrgMultipleWorkers(ctx context.Context, input *dto.ExecuteInDTO, organizationId int64) error {
+	depth := input.OrganizationTreeDepth
+	leafs := input.OrganizationCount
+	numOfDepthWorkers := 20
+	var c = make(chan WorkerDTO, utils.PowInt64(input.OrganizationCount, input.OrganizationTreeDepth))
+	wg := sync.WaitGroup{}
+	defer func() {
+		wg.Wait()
+		close(c)
+	}()
 
-		if input.OrganizationTreeDepth > 1 {
-			executeInput := &dto.ExecuteInDTO{
-				OrganizationCount:     input.OrganizationCount,
-				OrganizationTreeDepth: input.OrganizationTreeDepth - 1,
+	wg.Add(1)
+	c <- WorkerDTO{depth: depth, parent: organizationId}
+
+	for i := 0; i < numOfDepthWorkers; i++ {
+		go func(workId int) {
+			for dto := range c {
+				if dto.depth == 0 {
+					wg.Done()
+					continue
+				}
+
+				for i := int64(0); i < leafs; i++ {
+					subOrganization, err := createSubOrg(ctx, dto.parent)
+					if err != nil {
+						log.Error().Err(err).Int64("organziationId", organizationId).Msg("Error creating sub organization")
+						continue
+					}
+
+					log.Debug().Msgf("Worker %d, parent %d, depth %d\n", workId, dto.parent, depth-dto.depth+1)
+					if dto.depth > 0 {
+						wg.Add(1)
+						c <- WorkerDTO{depth: dto.depth - 1, parent: subOrganization.ID}
+					}
+				}
+				wg.Done()
 			}
-			err = createSubOrgRecursively(ctx, executeInput, subOrganization.ID)
-			if err != nil {
-				return err
-			}
-		}
+		}(i)
 	}
+
 	return nil
+}
+
+func createSubOrg(ctx context.Context, organizationId int64) (*api.CreateOrganizationOutDTO, error) {
+	createSubOrgInput := api.CreateOrganizationInDTO{
+		Name: utils.RandomName(),
+	}
+	subOrganization, err := api.CreateSubOrganization(ctx, organizationId, createSubOrgInput)
+	if err != nil {
+		return nil, err
+	}
+	err = api.SetAllLimitToUnlimited(ctx, subOrganization.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+	return subOrganization, err
 }
