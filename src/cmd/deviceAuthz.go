@@ -30,6 +30,16 @@ func DeviceAuthz(ctx context.Context) error {
 	log.Info().Str("device name", deviceName).Msg("Device created")
 
 	// TODO: create a service account with this device associated
+	adminRole, err := api.GetFirstAdminApplicationRole(ctx, organization.Id)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("admin role", adminRole.ID).Msg("Admin role retrieved")
+	adminDeviceRole, err := api.GetFirstAdminDeviceRole(ctx, organization.Id)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("admin device role", adminDeviceRole.ID).Msg("Admin device role retrieved")
 
 	// TODO: put certificate in the folder
 

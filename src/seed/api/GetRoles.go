@@ -14,7 +14,7 @@ import (
 )
 
 type RoleOutDTO struct {
-	ID                      int    `json:"id"`
+	ID                      int64  `json:"id"`
 	Name                    string `json:"name"`
 	Label                   string `json:"label"`
 	Description             string `json:"description"`
@@ -25,7 +25,7 @@ type RoleOutDTO struct {
 	Deleted                 bool   `json:"deleted"`
 	CreatedAt               int64  `json:"createdAt"`
 	UpdatedAt               int64  `json:"updatedAt"`
-	OrganizationID          int    `json:"organizationId"`
+	OrganizationID          int64  `json:"organizationId"`
 	DeviceGeneralPermission any    `json:"deviceGeneralPermission"`
 	VpnGeneralPermission    any    `json:"vpnGeneralPermission"`
 	EnableAccessToApp       bool   `json:"enableAccessToApp"`
@@ -85,7 +85,7 @@ func GetAppsSharingRoles(ctx context.Context, orgId int64) (roles *[]RoleOutDTO,
 func GetRoles(ctx context.Context, orgId int64, types []string, owners []string) (roles *[]RoleOutDTO, err error) {
 	origin := ctx.Value(utils.OriginKey).(string)
 
-	endpoint := origin + "svc/core/api/v1/organizations/" + fmt.Sprintf("%d", orgId) + "/roles?page=0&pageSize=500"
+	endpoint := origin + "/svc/core/api/v1/organizations/" + fmt.Sprintf("%d", orgId) + "/roles?page=0&pageSize=500"
 
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
