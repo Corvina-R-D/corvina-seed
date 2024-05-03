@@ -18,9 +18,6 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
 	log.Info().Interface("organization", organization).Msg("Organization retrieved")
 
 	err = createDeviceGroups(ctx, input, organization)

@@ -30,7 +30,7 @@ func CreateDevice(ctx context.Context, orgResourceId string, name string) (err e
 
 	log.Info().Str("device name", name).Msg("Device license activated and device created")
 
-	eachDeviceHasMapping := ctx.Value(utils.EachDeviceHasMapping).(bool)
+	eachDeviceHasMapping := utils.CtxValueOrDefault(ctx, utils.EachDeviceHasMapping, false)
 
 	if !eachDeviceHasMapping {
 		return

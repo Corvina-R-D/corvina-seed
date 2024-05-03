@@ -41,6 +41,23 @@ var keycloakFlags []*cli.StringFlag = []*cli.StringFlag{
 	},
 }
 
+var licenseManagerUserFlags []*cli.StringFlag = []*cli.StringFlag{
+	{
+		Name:        "license-manager-user",
+		Aliases:     []string{"lmu"},
+		Usage:       "License manager user",
+		DefaultText: "corvina-license-manager-keycloak-admin",
+		Value:       "corvina-license-manager-keycloak-admin",
+	},
+	{
+		Name:        "license-manager-pass",
+		Aliases:     []string{"lmp"},
+		Usage:       "License manager password",
+		DefaultText: "password",
+		Value:       "password",
+	},
+}
+
 var adminUserFlag *cli.StringFlag = &cli.StringFlag{
 	Name:        "admin-user",
 	Aliases:     []string{"au"},
@@ -158,20 +175,8 @@ func main() {
 					DefaultText: "1",
 					Value:       1,
 				},
-				&cli.StringFlag{
-					Name:        "license-manager-user",
-					Aliases:     []string{"lmu"},
-					Usage:       "License manager user",
-					DefaultText: "corvina-license-manager-keycloak-admin",
-					Value:       "corvina-license-manager-keycloak-admin",
-				},
-				&cli.StringFlag{
-					Name:        "license-manager-pass",
-					Aliases:     []string{"lmp"},
-					Usage:       "License manager password",
-					DefaultText: "password",
-					Value:       "password",
-				},
+				licenseManagerUserFlags[0],
+				licenseManagerUserFlags[1],
 			},
 		},
 		{
@@ -221,6 +226,40 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
+			},
+		},
+		{
+			Name:   "device-authz",
+			Hidden: true,
+			Usage:  "If you want to call Corvina's API using device certificate, this command will help you!",
+			Action: func(c *cli.Context) error {
+				if c.Bool("verbose") {
+					utils.VerboseLog()
+				}
+
+				c.Context = context.WithValue(c.Context, utils.OriginKey, c.String("origin"))
+				domain := getDomainFromOrigin(c.String("origin"))
+				c.Context = context.WithValue(c.Context, utils.DomainKey, domain)
+				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
+				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
+				c.Context = context.WithValue(c.Context, utils.LicenseHostKey, "https://app."+domain+"/svc/license")
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerUser, c.String("license-manager-user"))
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerPass, c.String("license-manager-pass"))
+
+				return cmd.DeviceAuthz(c.Context)
+			},
+			Flags: []cli.Flag{
+				verboseFlag,
+				originFlag,
+				keycloakFlags[0],
+				keycloakFlags[1],
+				keycloakFlags[2],
+				adminUserFlag,
+				licenseManagerUserFlags[0],
+				licenseManagerUserFlags[1],
 			},
 		},
 	}

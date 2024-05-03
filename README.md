@@ -8,7 +8,7 @@ Command line tools to create entities in corvina in bulk
 > - macOS 11+
 > - Windows 11 with WSL2
 
-## Usage ##
+## USAGE ##
 
 Example that creates 100 devices and 100 device groups in corvina.fog:
 
@@ -61,10 +61,30 @@ Echo the access token of the keycloak admin
 npx @corvina/corvina-seed@latest master-token
 ```
 
-### Develop on this repo ###
+### device-authz ###
+
+If you want to call Corvina's API using device certificate, this command will help you!
+
+```bash
+npx @corvina/corvina-seed@latest device-authz
+```
+
+Under the hood, this command will:
+
+- create a device
+- create a service account associated with the device
+- create a folder with the device certificate and key
+
+## DEVELOP ON THIS REPO ##
 
 If you want to develop on this repo, you need to install the following softwares:
 
 - [Node.js](https://nodejs.org/en/) (version 18+)
 - [Go](https://golang.org/) (version 1.20+)
 - [corvina-k8s] corvina compose up and running
+
+You can run the CLI in development mode by running the following command:
+
+```bash
+go run main.go
+```
