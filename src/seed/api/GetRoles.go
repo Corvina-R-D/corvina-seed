@@ -32,14 +32,6 @@ type RoleOutDTO struct {
 	OrgResourceID           string `json:"orgResourceId"`
 }
 
-type CorePagedDTO[T any] struct {
-	Number        int  `json:"number"`
-	Content       []T  `json:"content"`
-	TotalElements int  `json:"totalElements"`
-	TotalPages    int  `json:"totalPages"`
-	Last          bool `json:"last"`
-}
-
 func GetFirstAdminApplicationRole(ctx context.Context, orgId int64) (role *RoleOutDTO, err error) {
 	roles, err := GetApplicationRoles(ctx, orgId)
 	if err != nil {

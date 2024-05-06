@@ -27,14 +27,6 @@ type DeviceMappingServiceOutDTO struct {
 	UpdatedAt            int64  `json:"updatedAt"`
 }
 
-type MappingPagedDTO[T any] struct {
-	Number        int  `json:"number"`
-	Data          []T  `json:"data"`
-	TotalElements int  `json:"totalElements"`
-	TotalPages    int  `json:"totalPages"`
-	Last          bool `json:"last"`
-}
-
 func GetDeviceFromMappingService(ctx context.Context, orgResourceId string, deviceName string) (device *DeviceMappingServiceOutDTO, err error) {
 	origin := ctx.Value(utils.OriginKey).(string)
 
