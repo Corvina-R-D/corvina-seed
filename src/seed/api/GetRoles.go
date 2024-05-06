@@ -87,6 +87,14 @@ func GetRoles(ctx context.Context, orgId int64, types []string, owners []string)
 
 	endpoint := origin + "/svc/core/api/v1/organizations/" + fmt.Sprintf("%d", orgId) + "/roles?page=0&pageSize=500"
 
+	if len(types) > 0 {
+		endpoint += "&type=" + strings.Join(types, ",")
+	}
+
+	if len(owners) > 0 {
+		endpoint += "&owner=" + strings.Join(owners, ",")
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
 		return

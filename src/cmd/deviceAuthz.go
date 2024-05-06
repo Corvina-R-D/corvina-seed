@@ -45,6 +45,12 @@ func DeviceAuthz(ctx context.Context) error {
 		return err
 	}
 	log.Info().Interface("user", user).Msg("Service account created")
+	roles := []int64{adminRole.ID, adminDeviceRole.ID}
+	err = api.AssignRolesToUser(ctx, organization.Id, int64(user.ID), roles)
+	if err != nil {
+		return err
+	}
+	log.Info().Interface("roles", roles).Msg("Roles assigned to user")
 
 	// TODO: put certificate in the folder
 
