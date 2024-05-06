@@ -129,6 +129,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, c.Bool("each-device-has-mapping"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
 				c.Context = context.WithValue(c.Context, utils.ModelCount, c.Int64("model-count"))
+				c.Context = context.WithValue(c.Context, utils.ServiceAccountCount, c.Int64("service-account-count"))
 				c.Context = context.WithValue(c.Context, utils.OrganizationCount, c.Int64("organization-count"))
 				c.Context = context.WithValue(c.Context, utils.OrganizationTreeDepth, c.Int64("organization-tree-depth"))
 
@@ -145,6 +146,11 @@ func main() {
 					Name:    "model-count",
 					Aliases: []string{"m"},
 					Usage:   "Number of models to create",
+				},
+				&cli.Int64Flag{
+					Name:    "service-account-count",
+					Aliases: []string{"sa"},
+					Usage:   "Number of service accounts to create",
 				},
 				&cli.Int64Flag{
 					Name:    "device-count",

@@ -35,10 +35,32 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		return err
 	}
 
+	err = createServiceAccounts(ctx, input, organization)
+	if err != nil {
+		return err
+	}
+
 	err = createOrganizations(ctx, input, organization.Id)
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func createServiceAccounts(ctx context.Context, input *dto.ExecuteInDTO, organization *dto.OrganizationOutDTO) error {
+	if input.ServiceAccountCount == 0 {
+		return nil
+	}
+
+	for i := int64(0); i < input.ServiceAccountCount; i++ {
+		_, err := api.CreateServiceAccount(ctx, organization.Id, utils.RandomName())
+		if err != nil {
+			return err
+		}
+	}
+
+	utils.PrintlnGreen(fmt.Sprintf("Service accounts created: %d", input.ServiceAccountCount))
 
 	return nil
 }

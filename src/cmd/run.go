@@ -33,6 +33,12 @@ func Run(ctx context.Context) error {
 	}
 	log.Debug().Int64("model count", modelCount).Msg("")
 
+	serviceAccountCount, err := takeCountFromCtx(ctx, utils.ServiceAccountCount)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("service account count", serviceAccountCount).Msg("")
+
 	organizationCount, err := takeCountFromCtx(ctx, utils.OrganizationCount)
 	if err != nil {
 		return err
@@ -48,6 +54,7 @@ func Run(ctx context.Context) error {
 		DeviceCount:           deviceCount,
 		DeviceGroupCount:      deviceGroupCount,
 		ModelCount:            modelCount,
+		ServiceAccountCount:   serviceAccountCount,
 		OrganizationCount:     organizationCount,
 		OrganizationTreeDepth: organizationTreeDepth,
 	}
@@ -66,7 +73,7 @@ func Run(ctx context.Context) error {
 }
 
 func atLeastOneCountIsProvided(counters dto.ExecuteInDTO) bool {
-	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0 || counters.OrganizationCount > 0
+	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0 || counters.OrganizationCount > 0 || counters.ServiceAccountCount > 0
 }
 
 func takeCountFromCtx(ctx context.Context, ctxKey utils.CtxKey) (int64, error) {
