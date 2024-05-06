@@ -85,3 +85,56 @@ func GetDeviceFromMappingService(ctx context.Context, orgResourceId string, devi
 	return
 
 }
+
+type DeviceCoreServiceOutDTO struct {
+	ID            int64  `json:"id"`
+	Label         string `json:"label"`
+	HwID          string `json:"hwId"`
+	OrgResourceID string `json:"orgResourceId"`
+}
+
+func GetDeviceFromCoreService(ctx context.Context, organizationId int64, name string) (*DeviceCoreServiceOutDTO, error) {
+	origin := ctx.Value(utils.OriginKey).(string)
+
+	url := fmt.Sprintf("%s/svc/core/api/v1/organizations/%d/devices?deviceLabel=%s", origin, organizationId, name)
+	log.Debug().Str("url", url).Msg("")
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("accept", "application/json")
+	token, err := keycloak.AdminToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("authorization", "Bearer "+*token)
+
+	resp, err := utils.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error getting device, status=%s", resp.Status)
+	}
+
+	var out CorePagedDTO[DeviceCoreServiceOutDTO]
+	err = json.NewDecoder(resp.Body).Decode(&out)
+	if err != nil {
+		return nil, err
+	}
+
+	if out.TotalElements == 0 {
+		return nil, errors.New("unable to find any device with name " + name + ". Zero TotalElements")
+	}
+
+	device := out.Content[0]
+
+	if device.Label != name {
+		return nil, errors.New("unable to find any device with name " + name + ". Label mismatch")
+	}
+
+	return &device, nil
+}

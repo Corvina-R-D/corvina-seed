@@ -1,7 +1,7 @@
 package dto
 
 type OrganizationOutDTO struct {
-	Id                        int64    `json:"id"`
+	ID                        int64    `json:"id"`
 	Name                      string   `json:"name"`
 	Label                     string   `json:"label"`
 	Status                    string   `json:"status"`

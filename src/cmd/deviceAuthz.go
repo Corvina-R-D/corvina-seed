@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"corvina/corvina-seed/src/seed/api"
+	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/utils"
 	"os"
 
@@ -29,30 +30,47 @@ func DeviceAuthz(ctx context.Context) error {
 	}
 	log.Info().Str("device name", name).Msg("Device created")
 
-	// TODO: create a service account with this device associated
-	adminRole, err := api.GetFirstAdminApplicationRole(ctx, organization.Id)
+	err = CreateServiceAccountWithDeviceAssociated(ctx, organization, name)
+	if err != nil {
+		return err
+	}
+
+	// TODO: put certificate in the folder
+
+	return nil
+}
+
+func CreateServiceAccountWithDeviceAssociated(ctx context.Context, organization *dto.OrganizationOutDTO, deviceName string) error {
+	adminRole, err := api.GetFirstAdminApplicationRole(ctx, organization.ID)
 	if err != nil {
 		return err
 	}
 	log.Debug().Int64("admin role", adminRole.ID).Msg("Admin role retrieved")
-	adminDeviceRole, err := api.GetFirstAdminDeviceRole(ctx, organization.Id)
+	adminDeviceRole, err := api.GetFirstAdminDeviceRole(ctx, organization.ID)
 	if err != nil {
 		return err
 	}
 	log.Debug().Int64("admin device role", adminDeviceRole.ID).Msg("Admin device role retrieved")
-	user, err := api.CreateServiceAccount(ctx, organization.Id, name)
+	user, err := api.CreateServiceAccount(ctx, organization.ID, deviceName)
 	if err != nil {
 		return err
 	}
-	log.Info().Interface("user", user).Msg("Service account created")
+	log.Info().Interface("user", user).Msg("Service account created with the same name as the device")
 	roles := []int64{adminRole.ID, adminDeviceRole.ID}
-	err = api.AssignRolesToUser(ctx, organization.Id, int64(user.ID), roles)
+	err = api.AssignRolesToUser(ctx, organization.ID, int64(user.ID), roles)
 	if err != nil {
 		return err
 	}
 	log.Info().Interface("roles", roles).Msg("Roles assigned to user")
-
-	// TODO: put certificate in the folder
+	securityPolicy, err := api.GetSecurityPolicy(ctx, organization.ID, deviceName)
+	if err != nil {
+		return err
+	}
+	err = api.AssignSecurityPolicyToUser(ctx, organization.ID, securityPolicy.ID, user.ID)
+	if err != nil {
+		return err
+	}
+	log.Info().Interface("security policy", securityPolicy).Msg("Security policy assigned to user")
 
 	return nil
 }

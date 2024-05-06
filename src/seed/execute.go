@@ -40,7 +40,7 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		return err
 	}
 
-	err = createOrganizations(ctx, input, organization.Id)
+	err = createOrganizations(ctx, input, organization.ID)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func createServiceAccounts(ctx context.Context, input *dto.ExecuteInDTO, organiz
 	}
 
 	for i := int64(0); i < input.ServiceAccountCount; i++ {
-		_, err := api.CreateServiceAccount(ctx, organization.Id, utils.RandomName())
+		_, err := api.CreateServiceAccount(ctx, organization.ID, utils.RandomName())
 		if err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ func createDeviceGroups(ctx context.Context, input *dto.ExecuteInDTO, organizati
 	}
 
 	for i := int64(0); i < input.DeviceGroupCount; i++ {
-		err := api.CreateDeviceGroup(ctx, organization.Id, api.CreateDeviceGroupInDTO{
+		err := api.CreateDeviceGroup(ctx, organization.ID, api.CreateDeviceGroupInDTO{
 			Name: utils.RandomName(),
 		})
 		if err != nil {

@@ -26,12 +26,12 @@ type CreateUserInDTO struct {
 }
 
 type UserDTO struct {
-	ID                   int    `json:"id"`
+	ID                   int64  `json:"id"`
 	Username             string `json:"username"`
 	Email                string `json:"email"`
-	FirstName            any    `json:"firstName"`
-	LastName             any    `json:"lastName"`
-	Country              any    `json:"country"`
+	FirstName            string `json:"firstName"`
+	LastName             string `json:"lastName"`
+	Country              string `json:"country"`
 	ServiceAccount       bool   `json:"serviceAccount"`
 	ServiceAccountSecret string `json:"serviceAccountSecret"`
 	Owner                string `json:"owner"`

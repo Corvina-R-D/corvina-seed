@@ -254,6 +254,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.LicenseHostKey, "https://app."+domain+"/svc/license")
 				c.Context = context.WithValue(c.Context, utils.LicenseManagerUser, c.String("license-manager-user"))
 				c.Context = context.WithValue(c.Context, utils.LicenseManagerPass, c.String("license-manager-pass"))
+				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, true)
 
 				return cmd.DeviceAuthz(c.Context)
 			},
