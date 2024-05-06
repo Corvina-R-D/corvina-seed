@@ -11,8 +11,8 @@ import (
 
 func DeviceAuthz(ctx context.Context) error {
 
-	deviceName := utils.RandomName()
-	folderName := ctx.Value(utils.DomainKey).(string) + "." + deviceName
+	name := utils.RandomName()
+	folderName := ctx.Value(utils.DomainKey).(string) + "." + name
 	if err := os.Mkdir(folderName, os.ModePerm); err != nil {
 		return err
 	}
@@ -23,11 +23,11 @@ func DeviceAuthz(ctx context.Context) error {
 	}
 	log.Info().Interface("organization", organization).Msg("Organization retrieved")
 
-	err = api.CreateDevice(ctx, organization.ResourceID, deviceName)
+	err = api.CreateDevice(ctx, organization.ResourceID, name)
 	if err != nil {
 		return err
 	}
-	log.Info().Str("device name", deviceName).Msg("Device created")
+	log.Info().Str("device name", name).Msg("Device created")
 
 	// TODO: create a service account with this device associated
 	adminRole, err := api.GetFirstAdminApplicationRole(ctx, organization.Id)
@@ -40,6 +40,11 @@ func DeviceAuthz(ctx context.Context) error {
 		return err
 	}
 	log.Debug().Int64("admin device role", adminDeviceRole.ID).Msg("Admin device role retrieved")
+	user, err := api.CreateServiceAccount(ctx, organization.Id, name)
+	if err != nil {
+		return err
+	}
+	log.Info().Interface("user", user).Msg("Service account created")
 
 	// TODO: put certificate in the folder
 
