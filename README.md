@@ -88,3 +88,12 @@ You can run the CLI in development mode by running the following command:
 ```bash
 go run main.go
 ```
+
+## DEPLOY ##
+
+To deploy the CLI, you need to run the following command:
+
+```bash
+npm run prepublish
+npm run deploy
+```
