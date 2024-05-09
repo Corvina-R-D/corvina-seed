@@ -8,6 +8,7 @@ import (
 	"corvina/corvina-seed/src/seed/iam/enroll"
 	"corvina/corvina-seed/src/utils"
 	"corvina/corvina-seed/src/utils/pki"
+	"fmt"
 	"os"
 	"path"
 
@@ -66,7 +67,22 @@ func DeviceAuthz(ctx context.Context) error {
 	}
 	log.Info().Msg("PKI folder cleaned")
 
+	utils.PrintlnGreen(fmt.Sprintf("Folder %s created!", *folderName))
+	utils.PrintlnBlue(fmt.Sprintf(`
+cd %s
+curl https://%s/svc/core/api/v1/users/mine --cert cert.crt --key cert.key
+	`, *folderName, deviceDomain(ctx)))
+
 	return nil
+}
+
+func deviceDomain(ctx context.Context) string {
+	rootDomain := ctx.Value(utils.DomainKey).(string)
+	if rootDomain == "corvina.mk" {
+		rootDomain = "corvina.mk" + ":8443"
+	}
+
+	return "device." + rootDomain
 }
 
 func saveCertificate(folderName string) error {
