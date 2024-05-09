@@ -235,9 +235,8 @@ func main() {
 			},
 		},
 		{
-			Name:   "device-authz",
-			Hidden: true,
-			Usage:  "If you want to call Corvina's API using device certificate, this command will help you!",
+			Name:  "device-authz",
+			Usage: "If you want to call Corvina's API using device certificate, this command will help you!",
 			Action: func(c *cli.Context) error {
 				if c.Bool("verbose") {
 					utils.VerboseLog()

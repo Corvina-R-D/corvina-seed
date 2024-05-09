@@ -14,9 +14,9 @@ var OtaCaCertPool *x509.CertPool
 var OtaCertificates []tls.Certificate
 
 func LoadOtaCertificates() (err error) {
-	cert, err := tls.LoadX509KeyPair(pki.OtaPkiPath(pki.OtaCertificateRelativePath), pki.OtaPkiPath(pki.OtaPrivateKeyRelativePath))
+	cert, err := tls.LoadX509KeyPair(pki.PkiPath(pki.CertificateRelativePath), pki.PkiPath(pki.PrivateKeyRelativePath))
 	if err != nil {
-		log.Error().Err(err).Msg("Fatal error loading certificate")
+		log.Info().Err(err).Msg("Error loading certificate or private key, please enroll again")
 		return err
 	}
 
@@ -40,8 +40,8 @@ func LoadOtaCertificates() (err error) {
 	return nil
 }
 
-func init() {
-	pki.SetupOtaPKIFolder()
+func InitializeCertificate() {
+	pki.SetupPKIFolder()
 
 	// initialize vars, if files are available
 	// Read the CA certificate

@@ -5,14 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"corvina/corvina-seed/src/utils"
+
 	"github.com/rs/zerolog/log"
 )
 
-const OtaPrivateKeyRelativePath = "own/private/cert.key"
-const OtaCertificateRelativePath = "own/certs/cert.crt"
-const OTAPkiRoot = "./ota-pki"
+const PrivateKeyRelativePath = "own/private/cert.key"
+const CertificateRelativePath = "own/certs/cert.crt"
 
-func SetupOtaPKIFolder() {
+var PkiRoot = "./." + utils.RandomName() + "-pki"
+
+func SetupPKIFolder() {
 	// Define the directories to be created
 	dirs := []string{
 		"issuers/certs",
@@ -26,7 +29,7 @@ func SetupOtaPKIFolder() {
 
 	// Create each directory
 	for _, dir := range dirs {
-		err := os.MkdirAll(OtaPkiPath(dir), 0755)
+		err := os.MkdirAll(PkiPath(dir), 0755)
 		if err != nil {
 			log.Error().Err(err).Msg(fmt.Sprintf("Error creating directory %s:\n", dir))
 			return
@@ -35,6 +38,18 @@ func SetupOtaPKIFolder() {
 
 }
 
-func OtaPkiPath(relativePath string) string {
-	return filepath.Join(OTAPkiRoot, relativePath)
+func CleanPKIFolder() error {
+	return os.RemoveAll(PkiRoot)
+}
+
+func PkiPath(relativePath string) string {
+	return filepath.Join(PkiRoot, relativePath)
+}
+
+func CertificatePath() string {
+	return PkiPath(CertificateRelativePath)
+}
+
+func PrivateKeyPath() string {
+	return PkiPath(PrivateKeyRelativePath)
 }

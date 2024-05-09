@@ -12,7 +12,8 @@ func init() {
 
 	// Create a new TLS configuration with the certificate pool
 	tlsConfig := &tls.Config{
-		RootCAs: certificates.OtaCaCertPool,
+		RootCAs:            certificates.OtaCaCertPool,
+		InsecureSkipVerify: true,
 	}
 
 	// Create a new transport with the TLS configuration

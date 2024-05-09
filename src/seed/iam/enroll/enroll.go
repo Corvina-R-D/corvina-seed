@@ -28,7 +28,7 @@ func createCSR(logicalId string) (string, error) {
 	// if private key is not present in pki folder own/private, generate a new one
 
 	var privateKey *rsa.PrivateKey
-	privateKeyPath := filepath.Join(pki.OTAPkiRoot, pki.OtaPrivateKeyRelativePath)
+	privateKeyPath := filepath.Join(pki.PkiRoot, pki.PrivateKeyRelativePath)
 
 	_, err := os.Stat(privateKeyPath)
 	if os.IsNotExist(err) {
@@ -136,7 +136,7 @@ func CorvinaEnroll(pairingUri string, activationKey string) (keyPair *tls.Certif
 
 	if verified {
 		// save certificate to pki folder own/certs
-		certPath := pki.OtaPkiPath(pki.OtaCertificateRelativePath)
+		certPath := pki.PkiPath(pki.CertificateRelativePath)
 		certFile, err := os.Create(certPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error creating certificate file")
@@ -153,7 +153,7 @@ func CorvinaEnroll(pairingUri string, activationKey string) (keyPair *tls.Certif
 
 	log.Info().Bool("Certificate verified", verified).Msg("Certificate verified")
 
-	cert, err := tls.LoadX509KeyPair(pki.OtaPkiPath(pki.OtaCertificateRelativePath), pki.OtaPkiPath(pki.OtaPrivateKeyRelativePath))
+	cert, err := tls.LoadX509KeyPair(pki.PkiPath(pki.CertificateRelativePath), pki.PkiPath(pki.PrivateKeyRelativePath))
 	if err != nil {
 		log.Error().Err(err).Msg("Error loading certificate")
 		return nil, device, err

@@ -71,7 +71,7 @@ func createDevices(ctx context.Context, input *dto.ExecuteInDTO, organization *d
 	}
 
 	for i := int64(0); i < input.DeviceCount; i++ {
-		err := api.CreateDevice(ctx, organization.ResourceID, utils.RandomName())
+		_, err := api.CreateDevice(ctx, organization.ResourceID, utils.RandomName())
 		if err != nil {
 			return err
 		}

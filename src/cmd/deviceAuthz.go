@@ -4,19 +4,27 @@ import (
 	"context"
 	"corvina/corvina-seed/src/seed/api"
 	"corvina/corvina-seed/src/seed/dto"
+	"corvina/corvina-seed/src/seed/iam/certificates"
+	"corvina/corvina-seed/src/seed/iam/enroll"
 	"corvina/corvina-seed/src/utils"
+	"corvina/corvina-seed/src/utils/pki"
 	"os"
+	"path"
 
 	"github.com/rs/zerolog/log"
 )
 
 func DeviceAuthz(ctx context.Context) error {
 
+	certificates.InitializeCertificate()
+
 	name := utils.RandomName()
-	folderName := ctx.Value(utils.DomainKey).(string) + "." + name
-	if err := os.Mkdir(folderName, os.ModePerm); err != nil {
+
+	folderName, err := createDeviceFolder(ctx, name)
+	if err != nil {
 		return err
 	}
+	log.Info().Str("folder name", *folderName).Msg("Device folder created")
 
 	organization, err := api.GetOrganizationMine(ctx)
 	if err != nil {
@@ -24,23 +32,60 @@ func DeviceAuthz(ctx context.Context) error {
 	}
 	log.Info().Interface("organization", organization).Msg("Organization retrieved")
 
-	err = api.CreateDevice(ctx, organization.ResourceID, name)
+	activationKey, err := api.CreateDevice(ctx, organization.ResourceID, name)
 	if err != nil {
 		return err
 	}
 	log.Info().Str("device name", name).Msg("Device created")
 
-	err = CreateServiceAccountWithDeviceAssociated(ctx, organization, name)
+	err = createServiceAccountWithDeviceAssociated(ctx, organization, name)
 	if err != nil {
 		return err
 	}
 
-	// TODO: put certificate in the folder
+	_, _, err = enroll.CorvinaEnroll("https://pairing.corvina.mk/api/v1/", *activationKey)
+	if err != nil {
+		return err
+	}
+
+	err = saveCertificate(*folderName)
+	if err != nil {
+		return err
+	}
+	log.Info().Str("folder name", *folderName).Msg("Certificate saved")
+
+	err = savePrivateKey(*folderName)
+	if err != nil {
+		return err
+	}
+	log.Info().Str("folder name", *folderName).Msg("Private key saved")
+
+	err = pki.CleanPKIFolder()
+	if err != nil {
+		return err
+	}
+	log.Info().Msg("PKI folder cleaned")
 
 	return nil
 }
 
-func CreateServiceAccountWithDeviceAssociated(ctx context.Context, organization *dto.OrganizationOutDTO, deviceName string) error {
+func saveCertificate(folderName string) error {
+	return utils.CopyFile(pki.CertificatePath(), path.Join(folderName, "cert.crt"))
+}
+
+func savePrivateKey(folderName string) error {
+	return utils.CopyFile(pki.PrivateKeyPath(), path.Join(folderName, "cert.key"))
+}
+
+func createDeviceFolder(ctx context.Context, name string) (*string, error) {
+	folderName := ctx.Value(utils.DomainKey).(string) + "." + name
+	if err := os.Mkdir(folderName, os.ModePerm); err != nil {
+		return nil, err
+	}
+	return &folderName, nil
+}
+
+func createServiceAccountWithDeviceAssociated(ctx context.Context, organization *dto.OrganizationOutDTO, deviceName string) error {
 	adminRole, err := api.GetFirstAdminApplicationRole(ctx, organization.ID)
 	if err != nil {
 		return err

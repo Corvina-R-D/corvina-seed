@@ -15,9 +15,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func CreateDevice(ctx context.Context, orgResourceId string, name string) (err error) {
+func CreateDevice(ctx context.Context, orgResourceId string, name string) (activationKey *string, err error) {
 
-	activationKey, err := CreateDeviceLicense(ctx)
+	activationKey, err = CreateDeviceLicense(ctx)
 	if err != nil {
 		return
 	}
@@ -25,7 +25,7 @@ func CreateDevice(ctx context.Context, orgResourceId string, name string) (err e
 
 	err = activateDeviceLicense(ctx, *activationKey, name, orgResourceId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.Info().Str("device name", name).Msg("Device license activated and device created")
