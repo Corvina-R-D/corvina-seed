@@ -10,22 +10,18 @@ Command line tools to create entities in corvina in bulk
 
 ## USAGE ##
 
-Example that creates 100 devices and 100 device groups in corvina.fog:
-
-### run ###
+Example that creates 10 devices and 10 device groups in corvina minikube:
 
 ```bash
 npx @corvina/corvina-seed@latest run \
-  --origin https://app.corvina.fog:10443 \
-  --keycloak-origin https://auth.corvina.fog:10443 \
-  --keycloak-master-user keycloak-admin \
-  --keycloak-master-pass keycloak-admin \
+  --origin https://app.corvina.mk \
+  --keycloak-origin https://auth.corvina.mk \
+  --keycloak-master-user corvina-core-keycloak-admin \
+  --keycloak-master-pass password \
   --admin-user admin@exor \
   --device-count 10 \
   --device-group-count 10
 ```
-
-Example that creates 10 devices and 10 device groups in corvina minikube:
 
 ```bash
 npx @corvina/corvina-seed@latest run \
@@ -50,7 +46,7 @@ npx @corvina/corvina-seed@latest run \
   -lmu corvina-license-manager-keycloak-admin \
   -lmp password \
   -org 10 \
-  -otd 3
+  -otd 1
 ```
 
 ### master-token ###
@@ -59,6 +55,14 @@ Echo the access token of the keycloak admin
 
 ```bash
 npx @corvina/corvina-seed@latest master-token
+```
+
+### admin-token ###
+
+Echo the access token of the admin user
+
+```bash
+npx @corvina/corvina-seed@latest admin-token
 ```
 
 ### device-authz ###
@@ -81,7 +85,7 @@ If you want to develop on this repo, you need to install the following softwares
 
 - [Node.js](https://nodejs.org/en/) (version 18+)
 - [Go](https://golang.org/) (version 1.20+)
-- [corvina-k8s] corvina compose up and running
+- [corvina-k8s] corvina minikube up and running
 
 You can run the CLI in development mode by running the following command:
 
