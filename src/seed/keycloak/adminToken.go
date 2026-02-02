@@ -4,6 +4,9 @@ import (
 	"context"
 	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/utils"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -115,12 +118,23 @@ func impersonateUser(ctx context.Context, realm string, userID string) (output *
 	}
 	log.Trace().Str("body", string(body)).Msg("ImpersonateUser response")
 
+	// Generate PKCE code verifier and challenge (S256)
+	verifierBytes := make([]byte, 64)
+	if _, err = rand.Read(verifierBytes); err != nil {
+		return nil, err
+	}
+	codeVerifier := base64.RawURLEncoding.EncodeToString(verifierBytes)
+	sha := sha256.Sum256([]byte(codeVerifier))
+	codeChallenge := base64.RawURLEncoding.EncodeToString(sha[:])
+
 	params := url.Values{}
 	params.Set("response_mode", "fragment")
 	params.Set("response_type", "code")
 	params.Set("client_id", "corvina-web-portal")
 	params.Set("scope", fmt.Sprintf("openid org:%s", realm))
 	params.Set("redirect_uri", fmt.Sprintf("https://%s.app.%s/", realm, domain))
+	params.Set("code_challenge", codeChallenge)
+	params.Set("code_challenge_method", "S256")
 
 	endpoint = fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/auth?%s", keycloakOrigin, realm, params.Encode())
 
@@ -162,6 +176,8 @@ func impersonateUser(ctx context.Context, realm string, userID string) (output *
 	data.Set("client_id", "corvina-web-portal")
 	data.Set("scope", fmt.Sprintf("openid org:%s", realm))
 	data.Set("redirect_uri", fmt.Sprintf("https://%s.app.%s/", realm, domain))
+	// include PKCE verifier for token exchange
+	data.Set("code_verifier", codeVerifier)
 
 	req, err = http.NewRequestWithContext(ctx, "POST", endpoint, strings.NewReader(data.Encode()))
 	if err != nil {
