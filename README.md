@@ -16,8 +16,8 @@ Example that creates 10 devices and 10 device groups in corvina minikube:
 npx @corvina/corvina-seed@latest run \
   --origin https://app.corvina.mk \
   --keycloak-origin https://auth.corvina.mk \
-  --keycloak-master-user corvina-core-keycloak-admin \
-  --keycloak-master-pass password \
+  --keycloak-master-client-id corvina-core-keycloak-admin-client \
+  --keycloak-master-client-secret password \
   --admin-user admin@exor \
   --device-count 10 \
   --device-group-count 10
@@ -27,10 +27,10 @@ npx @corvina/corvina-seed@latest run \
 npx @corvina/corvina-seed@latest run \
   --origin https://app.corvina.mk \
   -ko https://auth.corvina.mk \
-  -ku corvina-core-keycloak-admin \
-  -kp password \
-  -lmu corvina-license-manager-keycloak-admin \
-  -lmp password \
+  -kc corvina-core-keycloak-admin-client \
+  -ks password \
+  -lmc corvina-core-license-manager-admin-client \
+  -lms password \
   -d 10 \
   -dg 10
 ```
@@ -41,10 +41,10 @@ Example that creates 10 sub organization tree in the users organization
 npx @corvina/corvina-seed@latest run \
   --origin https://app.corvina.mk \
   -ko https://auth.corvina.mk \
-  -ku corvina-core-keycloak-admin \
-  -kp password \
-  -lmu corvina-license-manager-keycloak-admin \
-  -lmp password \
+  -kc corvina-core-keycloak-admin-client \
+  -ks password \
+  -lmc corvina-core-license-manager-admin-client \
+  -lms password \
   -org 10 \
   -otd 1
 ```
