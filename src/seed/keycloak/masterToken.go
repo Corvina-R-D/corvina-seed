@@ -39,16 +39,15 @@ func MasterToken(ctx context.Context) (*string, error) {
 
 func fetchMasterToken(ctx context.Context) (*dto.OpenIdConnectTokenOutDTO, error) {
 	keycloakOrigin := ctx.Value(utils.KeycloakOrigin).(string)
-	masterUser := ctx.Value(utils.KeycloakMasterUser).(string)
-	masterPass := ctx.Value(utils.KeycloakMasterPass).(string)
+	masterClientId := ctx.Value(utils.KeycloakMasterClientId).(string)
+	masterClientSecret := ctx.Value(utils.KeycloakMasterClientSecret).(string)
 
 	endpoint := keycloakOrigin + "/auth/realms/master/protocol/openid-connect/token"
 
 	formData := url.Values{}
-	formData.Set("username", masterUser)
-	formData.Set("password", masterPass)
-	formData.Set("grant_type", "password")
-	formData.Set("client_id", "admin-cli")
+	formData.Set("client_id", masterClientId)
+	formData.Set("client_secret", masterClientSecret)
+	formData.Set("grant_type", "client_credentials")
 
 	requestBody := formData.Encode()
 
