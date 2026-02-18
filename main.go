@@ -26,33 +26,33 @@ var keycloakFlags []*cli.StringFlag = []*cli.StringFlag{
 		Value:       "https://auth.corvina.mk",
 	},
 	{
-		Name:        "keycloak-master-user",
-		Aliases:     []string{"ku"},
-		Usage:       "Keycloak master user",
-		DefaultText: "corvina-core-keycloak-admin",
-		Value:       "corvina-core-keycloak-admin",
+		Name:        "keycloak-master-client-id",
+		Aliases:     []string{"kc"},
+		Usage:       "Keycloak master client ID",
+		DefaultText: "corvina-core-keycloak-admin-client",
+		Value:       "corvina-core-keycloak-admin-client",
 	},
 	{
-		Name:        "keycloak-master-pass",
-		Aliases:     []string{"kp"},
-		Usage:       "Keycloak master password",
+		Name:        "keycloak-master-client-secret",
+		Aliases:     []string{"ks"},
+		Usage:       "Keycloak master client secret",
 		DefaultText: "password",
 		Value:       "password",
 	},
 }
 
-var licenseManagerUserFlags []*cli.StringFlag = []*cli.StringFlag{
+var licenseManagerKeycloakClientFlags []*cli.StringFlag = []*cli.StringFlag{
 	{
-		Name:        "license-manager-user",
-		Aliases:     []string{"lmu"},
-		Usage:       "License manager user",
-		DefaultText: "corvina-license-manager-keycloak-admin",
-		Value:       "corvina-license-manager-keycloak-admin",
+		Name:        "license-manager-client-id",
+		Aliases:     []string{"lmc"},
+		Usage:       "License manager client ID",
+		DefaultText: "corvina-core-license-manager-admin-client",
+		Value:       "corvina-core-license-manager-admin-client",
 	},
 	{
-		Name:        "license-manager-pass",
-		Aliases:     []string{"lmp"},
-		Usage:       "License manager password",
+		Name:        "license-manager-client-secret",
+		Aliases:     []string{"lms"},
+		Usage:       "License manager client secret",
 		DefaultText: "password",
 		Value:       "password",
 	},
@@ -118,13 +118,13 @@ func main() {
 				domain := getDomainFromOrigin(c.String("origin"))
 				c.Context = context.WithValue(c.Context, utils.DomainKey, domain)
 				c.Context = context.WithValue(c.Context, utils.LicenseHostKey, "https://app."+domain+"/svc/license")
-				c.Context = context.WithValue(c.Context, utils.LicenseManagerUser, c.String("license-manager-user"))
-				c.Context = context.WithValue(c.Context, utils.LicenseManagerPass, c.String("license-manager-pass"))
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerClientId, c.String("license-manager-client-id"))
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerClientSecret, c.String("license-manager-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
 				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
 				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, c.Bool("each-device-has-mapping"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
@@ -181,8 +181,8 @@ func main() {
 					DefaultText: "1",
 					Value:       1,
 				},
-				licenseManagerUserFlags[0],
-				licenseManagerUserFlags[1],
+				licenseManagerKeycloakClientFlags[0],
+				licenseManagerKeycloakClientFlags[1],
 			},
 		},
 		{
@@ -194,8 +194,8 @@ func main() {
 				}
 
 				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 
 				return cmd.MasterToken(c.Context)
 			},
@@ -218,8 +218,8 @@ func main() {
 				domain := getDomainFromOrigin(c.String("origin"))
 				c.Context = context.WithValue(c.Context, utils.DomainKey, domain)
 				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
 				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
 
@@ -246,13 +246,13 @@ func main() {
 				domain := getDomainFromOrigin(c.String("origin"))
 				c.Context = context.WithValue(c.Context, utils.DomainKey, domain)
 				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterUser, c.String("keycloak-master-user"))
-				c.Context = context.WithValue(c.Context, utils.KeycloakMasterPass, c.String("keycloak-master-pass"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
+				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
 				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
 				c.Context = context.WithValue(c.Context, utils.LicenseHostKey, "https://app."+domain+"/svc/license")
-				c.Context = context.WithValue(c.Context, utils.LicenseManagerUser, c.String("license-manager-user"))
-				c.Context = context.WithValue(c.Context, utils.LicenseManagerPass, c.String("license-manager-pass"))
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerClientId, c.String("license-manager-client-id"))
+				c.Context = context.WithValue(c.Context, utils.LicenseManagerClientSecret, c.String("license-manager-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, true)
 
 				return cmd.DeviceAuthz(c.Context)
@@ -264,8 +264,8 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
-				licenseManagerUserFlags[0],
-				licenseManagerUserFlags[1],
+				licenseManagerKeycloakClientFlags[0],
+				licenseManagerKeycloakClientFlags[1],
 			},
 		},
 	}

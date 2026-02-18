@@ -39,15 +39,15 @@ func LicenseManagerToken(ctx context.Context) (*string, error) {
 
 func fetchLicenseManagerToken(ctx context.Context) (*dto.OpenIdConnectTokenOutDTO, error) {
 	keycloakOrigin := ctx.Value(utils.KeycloakOrigin).(string)
-	username := ctx.Value(utils.LicenseManagerUser).(string)
-	password := ctx.Value(utils.LicenseManagerPass).(string)
+	clientId := ctx.Value(utils.LicenseManagerClientId).(string)
+	clientSecret := ctx.Value(utils.LicenseManagerClientSecret).(string)
+
 	endpoint := keycloakOrigin + "/auth/realms/master/protocol/openid-connect/token"
 
 	formData := url.Values{}
-	formData.Set("username", username)
-	formData.Set("password", password)
-	formData.Set("grant_type", "password")
-	formData.Set("client_id", "license-manager")
+	formData.Set("client_id", clientId)
+	formData.Set("client_secret", clientSecret)
+	formData.Set("grant_type", "client_credentials")
 
 	requestBody := formData.Encode()
 
