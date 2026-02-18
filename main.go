@@ -41,7 +41,7 @@ var keycloakFlags []*cli.StringFlag = []*cli.StringFlag{
 	},
 }
 
-var licenseManagerUserFlags []*cli.StringFlag = []*cli.StringFlag{
+var licenseManagerKeycloakClientFlags []*cli.StringFlag = []*cli.StringFlag{
 	{
 		Name:        "license-manager-client-id",
 		Aliases:     []string{"lmc"},
@@ -181,8 +181,8 @@ func main() {
 					DefaultText: "1",
 					Value:       1,
 				},
-				licenseManagerUserFlags[0],
-				licenseManagerUserFlags[1],
+				licenseManagerKeycloakClientFlags[0],
+				licenseManagerKeycloakClientFlags[1],
 			},
 		},
 		{
@@ -264,8 +264,8 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
-				licenseManagerUserFlags[0],
-				licenseManagerUserFlags[1],
+				licenseManagerKeycloakClientFlags[0],
+				licenseManagerKeycloakClientFlags[1],
 			},
 		},
 	}
