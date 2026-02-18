@@ -1,6 +1,6 @@
 {
   "name": "@corvina/corvina-seed",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Command line tools to create entities in corvina in bulk",
   "bin": {
     "create-corvina-app": "/bin/index.js"
