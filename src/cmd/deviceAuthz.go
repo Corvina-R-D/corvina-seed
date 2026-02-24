@@ -78,10 +78,6 @@ curl https://%s/svc/core/api/v1/users/mine --cert cert.crt --key cert.key
 
 func deviceDomain(ctx context.Context) string {
 	rootDomain := ctx.Value(utils.DomainKey).(string)
-	if rootDomain == "corvina.mk" {
-		rootDomain = "corvina.mk" + ":8443"
-	}
-
 	return "device." + rootDomain
 }
 
