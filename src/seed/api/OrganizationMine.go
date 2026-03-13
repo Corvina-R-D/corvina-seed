@@ -59,14 +59,14 @@ func GetOrganizationMine(ctx context.Context) (*dto.OrganizationOutDTO, error) {
 
 	if len(organizations) > 1 {
 		if orgResourceId == "" {
-			return nil, errors.New("more than one organization found and no -org-resource-id provided")
+			return nil, errors.New("more than one organization found and no --org-resource-id provided")
 		}
 		for i := range organizations {
 			if organizations[i].ResourceID == orgResourceId {
 				return &organizations[i], nil
 			}
 		}
-		return nil, errors.New("more than one organization found and no matching -org-resource-id provided")
+		return nil, errors.New("more than one organization found and no matching --org-resource-id provided")
 	}
 
 	return &organizations[0], nil
