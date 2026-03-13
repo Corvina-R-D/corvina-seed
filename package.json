@@ -1,6 +1,6 @@
 {
   "name": "@corvina/corvina-seed",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Command line tools to create entities in corvina in bulk",
   "bin": {
     "create-corvina-app": "/bin/index.js"
@@ -19,6 +19,6 @@
     "corvina"
   ],
   "homepage": "https://github.com/Corvina-R-D/corvina-seed",
-  "author": "Marcello Bellomi",
+  "author": "corvina.io",
   "license": "ISC"
 }
