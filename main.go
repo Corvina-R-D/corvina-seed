@@ -126,6 +126,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
+				c.Context = context.WithValue(c.Context, utils.OrgResourceId, c.String("org-resource-id"))
 				c.Context = context.WithValue(c.Context, utils.EachDeviceHasMapping, c.Bool("each-device-has-mapping"))
 				c.Context = context.WithValue(c.Context, utils.DeviceGroupCount, c.Int64("device-group-count"))
 				c.Context = context.WithValue(c.Context, utils.ModelCount, c.Int64("model-count"))
@@ -142,6 +143,11 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
+				&cli.StringFlag{
+					Name:    "org-resource-id",
+					Aliases: []string{"orgid"},
+					Usage:   "Resource ID of the organization to create entities in (only needed if there are more than one organization under the admin user)",
+				},
 				&cli.Int64Flag{
 					Name:    "model-count",
 					Aliases: []string{"m"},

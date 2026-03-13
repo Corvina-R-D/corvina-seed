@@ -35,6 +35,21 @@ npx @corvina/corvina-seed@latest run \
   -dg 10
 ```
 
+Example that creates 10 devices and 10 device groups in corvina minikube if there are more than one organization under the admin user (with -orgid option the org-resource-id can be passed to the script):
+
+```bash
+npx @corvina/corvina-seed@latest run \
+  --origin https://app.corvina.mk \
+  -ko https://auth.corvina.mk \
+  -kc corvina-core-keycloak-admin-client \
+  -ks password \
+  -lmc corvina-core-license-manager-admin-client \
+  -lms password \
+  -d 10 \
+  -dg 10 \
+  -orgid exor
+```
+
 Example that creates 10 sub organization tree in the users organization
 
 ```bash
