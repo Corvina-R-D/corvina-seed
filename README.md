@@ -35,7 +35,7 @@ npx @corvina/corvina-seed@latest run \
   -dg 10
 ```
 
-Example that creates 10 devices and 10 device groups in corvina minikube if there are more than one organization under the admin user (with -orgid option the org-resource-id can be passed to the script):
+Example that creates 10 devices and 10 device groups in corvina minikube if there are more than one organization under the admin user. In this case, you can pass the organization resource ID to the script using `--org-resource-id` (alias `-orgid`):
 
 ```bash
 npx @corvina/corvina-seed@latest run \
