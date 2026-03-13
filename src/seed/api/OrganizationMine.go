@@ -66,6 +66,7 @@ func GetOrganizationMine(ctx context.Context) (*dto.OrganizationOutDTO, error) {
 				return &organizations[i], nil
 			}
 		}
+		return nil, errors.New("more than one organization found and no matching resourceId provided")
 	}
 
 	return &organizations[0], nil
