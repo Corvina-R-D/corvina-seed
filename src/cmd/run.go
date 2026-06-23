@@ -50,6 +50,16 @@ func Run(ctx context.Context) error {
 	}
 	log.Debug().Int64("organization tree depth", organizationTreeDepth).Msg("")
 
+	userCount, err := takeCountFromCtx(ctx, utils.UserCount)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("user count", userCount).Msg("")
+
+	// SeedOrgName è una stringa, non un contatore: la leggiamo direttamente dal context.
+	seedOrgName, _ := ctx.Value(utils.SeedOrgName).(string)
+	log.Debug().Str("seed org name", seedOrgName).Msg("")
+
 	executeInput := dto.ExecuteInDTO{
 		DeviceCount:           deviceCount,
 		DeviceGroupCount:      deviceGroupCount,
@@ -57,6 +67,8 @@ func Run(ctx context.Context) error {
 		ServiceAccountCount:   serviceAccountCount,
 		OrganizationCount:     organizationCount,
 		OrganizationTreeDepth: organizationTreeDepth,
+		UserCount:             userCount,
+		SeedOrgName:           seedOrgName,
 	}
 
 	if !atLeastOneCountIsProvided(executeInput) {
@@ -73,7 +85,8 @@ func Run(ctx context.Context) error {
 }
 
 func atLeastOneCountIsProvided(counters dto.ExecuteInDTO) bool {
-	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0 || counters.OrganizationCount > 0 || counters.ServiceAccountCount > 0
+	// SeedOrgName da solo è sufficiente: crea la org contenitore e stampa il resource_id.
+	return counters.DeviceCount > 0 || counters.DeviceGroupCount > 0 || counters.ModelCount > 0 || counters.OrganizationCount > 0 || counters.ServiceAccountCount > 0 || counters.UserCount > 0 || counters.SeedOrgName != ""
 }
 
 func takeCountFromCtx(ctx context.Context, ctxKey utils.CtxKey) (int64, error) {

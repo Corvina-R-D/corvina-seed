@@ -139,6 +139,8 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.ServiceAccountCount, c.Int64("service-account-count"))
 				c.Context = context.WithValue(c.Context, utils.OrganizationCount, c.Int64("organization-count"))
 				c.Context = context.WithValue(c.Context, utils.OrganizationTreeDepth, c.Int64("organization-tree-depth"))
+				c.Context = context.WithValue(c.Context, utils.UserCount, c.Int64("user-count"))
+				c.Context = context.WithValue(c.Context, utils.SeedOrgName, c.String("seed-org-name"))
 
 				return cmd.Run(c.Context)
 			},
@@ -188,6 +190,16 @@ func main() {
 					Usage:       "Depth of the organization tree to create in the admin user organization",
 					DefaultText: "1",
 					Value:       1,
+				},
+				&cli.Int64Flag{
+					Name:    "user-count",
+					Aliases: []string{"u"},
+					Usage:   "Number of users to create, distributed round-robin across all sub-organizations (or root org if none)",
+				},
+				&cli.StringFlag{
+					Name:    "seed-org-name",
+					Aliases: []string{"son"},
+					Usage:   "Name of a new sub-organization to create first; all sub-orgs, users and devices are placed inside it. The resource_id is printed on creation for later reuse with --org-resource-id.",
 				},
 				licenseManagerKeycloakClientFlags[0],
 				licenseManagerKeycloakClientFlags[1],
