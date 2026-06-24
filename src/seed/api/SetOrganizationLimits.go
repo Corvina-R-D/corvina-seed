@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -65,26 +66,22 @@ func SetNumberOfDeviceVpnLimit(ctx context.Context, orgResourceID string, quanti
 	})
 }
 
-func SetAllLimitToUnlimited(ctx context.Context, orgResourceID string) (err error) {
-	err = SetNumberOfOrgLimit(ctx, orgResourceID, "-1")
-	if err != nil {
-		return
+// SetAllLimitToUnlimited imposta tutti i limiti a -1 (illimitato).
+// delay viene applicato prima di ogni singola PUT: con chiamate ravvicinate
+// anche i 5 limit-call rispettano il rate limiter del server.
+func SetAllLimitToUnlimited(ctx context.Context, orgResourceID string, delay time.Duration) (err error) {
+	calls := []func() error{
+		func() error { return SetNumberOfOrgLimit(ctx, orgResourceID, "-1") },
+		func() error { return SetNumberOfUsersLimit(ctx, orgResourceID, "-1") },
+		func() error { return SetNumberOfDevicesLimit(ctx, orgResourceID, "-1") },
+		func() error { return SetNumberOfDeviceDataLimit(ctx, orgResourceID, "-1") },
+		func() error { return SetNumberOfDeviceVpnLimit(ctx, orgResourceID, "-1") },
 	}
-	err = SetNumberOfUsersLimit(ctx, orgResourceID, "-1")
-	if err != nil {
-		return
-	}
-	err = SetNumberOfDevicesLimit(ctx, orgResourceID, "-1")
-	if err != nil {
-		return
-	}
-	err = SetNumberOfDeviceDataLimit(ctx, orgResourceID, "-1")
-	if err != nil {
-		return
-	}
-	err = SetNumberOfDeviceVpnLimit(ctx, orgResourceID, "-1")
-	if err != nil {
-		return
+	for _, call := range calls {
+		time.Sleep(delay)
+		if err = call(); err != nil {
+			return
+		}
 	}
 	return
 }

@@ -6,12 +6,16 @@ import (
 	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/utils"
 	"fmt"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
 func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
+
+	totalStart := time.Now()
 
 	organization, err := api.GetOrganizationMine(ctx)
 	if err != nil {
@@ -20,8 +24,14 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 
 	log.Info().Interface("organization", organization).Msg("Organization retrieved")
 
+	// rootOrg è sempre la org dell'admin (es. "exor"): ha il realm Keycloak
+	// configurato ed è l'unica che accetta la creazione di utenti con email @realm.
+	// Le sub-org create dal seed tool non hanno hostname e rifiutano la creazione
+	// utenti (errore 15004). Passiamo rootOrg a createUsers esplicitamente.
+	rootOrg := organization
+
 	// Se è stato fornito --seed-org-name, creiamo una sub-org con quel nome
-	// come "contenitore" di tutto ciò che segue (albero, utenti, device).
+	// come "contenitore" di tutto ciò che segue (albero, device e sub-org).
 	// L'org radice dell'admin viene usata solo come parent di questa nuova org.
 	// Al termine stampiamo il resource_id così può essere riutilizzato con
 	// --org-resource-id in run successivi senza ricreare la org.
@@ -32,13 +42,13 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		if err != nil {
 			return err
 		}
-		if err = api.SetAllLimitToUnlimited(ctx, seedOrg.ResourceID); err != nil {
+		if err = api.SetAllLimitToUnlimited(ctx, seedOrg.ResourceID, time.Duration(input.RequestDelayMs)*time.Millisecond); err != nil {
 			return err
 		}
 		utils.PrintlnGreen(fmt.Sprintf("Seed org created: %q  resource_id: %s", seedOrg.Name, seedOrg.ResourceID))
 
 		// Sostituiamo "organization" con la nuova org contenitore:
-		// da qui in poi device, utenti e sub-org vengono creati al suo interno.
+		// da qui in poi device e sub-org vengono creati al suo interno.
 		organization = &dto.OrganizationOutDTO{
 			ID:         seedOrg.ID,
 			ResourceID: seedOrg.ResourceID,
@@ -75,11 +85,14 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 		return err
 	}
 
-	// Gli utenti vengono distribuiti allo stesso modo.
-	err = createUsers(ctx, input, organization, subOrgs)
+	// Gli utenti vengono creati nella root org (che ha il realm Keycloak),
+	// non nelle sub-org che non hanno hostname configurato.
+	err = createUsers(ctx, input, rootOrg, subOrgs)
 	if err != nil {
 		return err
 	}
+
+	utils.PrintlnBlue(fmt.Sprintf("Total elapsed: %s", time.Since(totalStart).Round(time.Second)))
 
 	return nil
 }
@@ -109,6 +122,13 @@ func createDevices(ctx context.Context, input *dto.ExecuteInDTO, organization *d
 		return nil
 	}
 
+	devStart := time.Now()
+	logEvery := input.DeviceCount / 10
+	if logEvery < 1 {
+		logEvery = 1
+	}
+	created := int64(0)
+
 	for i := int64(0); i < input.DeviceCount; i++ {
 		// Seleziona l'org target: round-robin sulle sub-org, oppure root org.
 		var targetResourceID string
@@ -118,13 +138,27 @@ func createDevices(ctx context.Context, input *dto.ExecuteInDTO, organization *d
 			targetResourceID = organization.ResourceID
 		}
 
+		// Throttle: Elasticsearch (mappings) è lento; senza delay si satura.
+		time.Sleep(time.Duration(input.RequestDelayMs) * time.Millisecond)
 		_, err := api.CreateDevice(ctx, targetResourceID, utils.RandomName())
 		if err != nil {
-			return err
+			// NON ritentiamo: CreateDevice è multi-step (crea device → mappings → licenza).
+			// Se mappings va in timeout il device è già scritto nel DB; un retry usa lo stesso
+			// stato parziale e causa "400 Error activating device license".
+			log.Error().Err(err).Str("orgResourceId", targetResourceID).Msg("Error creating device")
+		} else {
+			created++
+		}
+
+		done := i + 1
+		if done%logEvery == 0 || done == input.DeviceCount {
+			elapsed := time.Since(devStart)
+			rate := float64(done) / elapsed.Seconds()
+			utils.PrintlnBlue(fmt.Sprintf("  devices: %d / %d (%.1f dev/s, ok: %d)", done, input.DeviceCount, rate, created))
 		}
 	}
 
-	utils.PrintlnGreen(fmt.Sprintf("Devices created: %d", input.DeviceCount))
+	utils.PrintlnGreen(fmt.Sprintf("Devices created: %d / %d", created, input.DeviceCount))
 
 	return nil
 }
@@ -175,18 +209,27 @@ func createUsers(ctx context.Context, input *dto.ExecuteInDTO, organization *dto
 		return nil
 	}
 
+	// Il dominio email deve corrispondere al realm dell'org (es. "@exor"):
+	// le sub-org senza hostname configurato rifiutano domini esterni.
+	realm, _ := ctx.Value(utils.UserRealm).(string)
+
+	userStart := time.Now()
+	logEvery := input.UserCount / 10
+	if logEvery < 1 {
+		logEvery = 1
+	}
+
+	created := int64(0)
 	for i := int64(0); i < input.UserCount; i++ {
-		// Seleziona l'org target: round-robin sulle sub-org, oppure root org.
-		var targetOrgID int64
-		if len(subOrgs) > 0 {
-			targetOrgID = subOrgs[int(i)%len(subOrgs)].ID
-		} else {
-			targetOrgID = organization.ID
-		}
+		// Gli utenti vengono sempre creati nella root org: solo lei ha il realm
+		// Keycloak configurato. Le sub-org non hanno hostname e rifiutano la
+		// creazione utenti con errore 15004.
+		targetOrgID := organization.ID
 
 		name := utils.RandomName()
+		time.Sleep(time.Duration(input.RequestDelayMs) * time.Millisecond)
 		_, err := api.CreateUser(ctx, targetOrgID, api.CreateUserInDTO{
-			Email:                    name + "@seed.corvina.io",
+			Email:                    name + "@" + realm,
 			Username:                 name,
 			EmailVerified:            true,
 			TemporaryPassword:        true,
@@ -198,11 +241,23 @@ func createUsers(ctx context.Context, input *dto.ExecuteInDTO, organization *dto
 			AdminUserOf:              []int64{},
 		})
 		if err != nil {
-			return err
+			// Logga e continua: un errore su una singola org non deve bloccare
+			// la creazione degli utenti rimanenti (stesso comportamento della creazione org).
+			log.Error().Err(err).Int64("orgId", targetOrgID).Msg("Error creating user")
+		} else {
+			created++
+		}
+
+		done := i + 1
+		if done%logEvery == 0 || done == input.UserCount {
+			elapsed := time.Since(userStart)
+			rate := float64(done) / elapsed.Seconds()
+			utils.PrintlnBlue(fmt.Sprintf("  users: %d / %d (%.1f user/s, ok: %d)", done, input.UserCount, rate, created))
 		}
 	}
 
-	utils.PrintlnGreen(fmt.Sprintf("Users created: %d", input.UserCount))
+	// Mostra il conteggio reale, così è visibile se ci sono stati errori parziali.
+	utils.PrintlnGreen(fmt.Sprintf("Users created: %d / %d", created, input.UserCount))
 
 	return nil
 }
@@ -225,14 +280,16 @@ func createOrganizations(ctx context.Context, input *dto.ExecuteInDTO, organizat
 	}
 
 	totalOrganizations := calculateNumberOfOrganizations(input)
-	utils.PrintlnBlue(fmt.Sprintf("Creating organizations: %d with depth %d = %d", input.OrganizationCount, input.OrganizationTreeDepth, totalOrganizations))
+	utils.PrintlnBlue(fmt.Sprintf("Creating organizations: %d children × depth %d = %d theoretical (workers: %d)", input.OrganizationCount, input.OrganizationTreeDepth, totalOrganizations, input.OrgWorkers))
 
 	createdOrgs, err := createSubOrgMultipleWorkers(ctx, input, organizationId)
 	if err != nil {
 		return nil, err
 	}
 
-	utils.PrintlnGreen(fmt.Sprintf("Organizations created: %d", totalOrganizations))
+	// Stampa il conteggio reale (non quello teorico) così è subito evidente
+	// quante org sono state effettivamente create in caso di errori parziali.
+	utils.PrintlnGreen(fmt.Sprintf("Organizations created: %d / %d", len(createdOrgs), totalOrganizations))
 
 	return createdOrgs, nil
 }
@@ -249,13 +306,23 @@ type WorkerDTO struct {
 func createSubOrgMultipleWorkers(ctx context.Context, input *dto.ExecuteInDTO, organizationId int64) ([]api.CreateOrganizationOutDTO, error) {
 	depth := input.OrganizationTreeDepth
 	leafs := input.OrganizationCount
-	numOfDepthWorkers := 20
+	// Numero di goroutine concorrenti: configurabile via --org-workers.
+	// Un valore basso (default 3) protegge il connection pool di Postgres
+	// su ambienti con risorse limitate (es. minikube).
+	numOfDepthWorkers := int(input.OrgWorkers)
 	var c = make(chan WorkerDTO, utils.PowInt64(input.OrganizationCount, input.OrganizationTreeDepth))
 	wg := sync.WaitGroup{}
 
 	// Slice condivisa tra le goroutine: ogni worker vi appende le org create.
 	var createdOrgs []api.CreateOrganizationOutDTO
 	var mu sync.Mutex
+
+	orgStart := time.Now()
+	totalOrgs := calculateNumberOfOrganizations(input)
+	logEvery := totalOrgs / 10
+	if logEvery < 1 {
+		logEvery = 1
+	}
 
 	wg.Add(1)
 	c <- WorkerDTO{depth: depth, parent: organizationId}
@@ -269,7 +336,7 @@ func createSubOrgMultipleWorkers(ctx context.Context, input *dto.ExecuteInDTO, o
 				}
 
 				for i := int64(0); i < leafs; i++ {
-					subOrganization, err := createSubOrg(ctx, dto.parent)
+					subOrganization, err := createSubOrg(ctx, dto.parent, time.Duration(input.RequestDelayMs)*time.Millisecond)
 					if err != nil {
 						log.Error().Err(err).Int64("organziationId", organizationId).Msg("Error creating sub organization")
 						continue
@@ -278,7 +345,19 @@ func createSubOrgMultipleWorkers(ctx context.Context, input *dto.ExecuteInDTO, o
 					// Registra la sub-org creata nella lista condivisa.
 					mu.Lock()
 					createdOrgs = append(createdOrgs, *subOrganization)
+					n := int64(len(createdOrgs))
 					mu.Unlock()
+
+					if n%logEvery == 0 || n == totalOrgs {
+						elapsed := time.Since(orgStart)
+						rate := float64(n) / elapsed.Seconds()
+						eta := ""
+						if rate > 0 && n < totalOrgs {
+							remaining := time.Duration(float64(totalOrgs-n)/rate) * time.Second
+							eta = " ETA: ~" + remaining.Round(time.Second).String()
+						}
+						utils.PrintlnBlue(fmt.Sprintf("  orgs: %d / %d (%.1f org/s%s)", n, totalOrgs, rate, eta))
+					}
 
 					log.Debug().Msgf("Worker %d, parent %d, depth %d\n", workId, dto.parent, depth-dto.depth+1)
 					if dto.depth > 0 {
@@ -299,17 +378,71 @@ func createSubOrgMultipleWorkers(ctx context.Context, input *dto.ExecuteInDTO, o
 	return createdOrgs, nil
 }
 
-func createSubOrg(ctx context.Context, organizationId int64) (*api.CreateOrganizationOutDTO, error) {
-	createSubOrgInput := api.CreateOrganizationInDTO{
-		Name: utils.RandomName(),
+// isRetryable distingue errori transitori da errori permanenti.
+// 5xx = problemi server; 429 = rate limit (il server chiede di rallentare);
+// timeout/connection refused = problemi di rete.
+// I 4xx diversi da 429 (es. 400, 403, 404) sono errori permanenti: non ha
+// senso riprovare perché il server rifiuterà la stessa richiesta di nuovo.
+func isRetryable(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "Status:5") ||
+		strings.Contains(msg, "Status:429") ||
+		strings.Contains(msg, "deadline exceeded") ||
+		strings.Contains(msg, "connection refused")
+}
+
+// withRetry esegue fn fino a 3 volte con backoff esponenziale (1s, 2s, 4s),
+// ma solo se l'errore è classificato come transitorio da isRetryable.
+func withRetry(fn func() error) error {
+	const maxAttempts = 3
+	delay := time.Second
+
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if err := fn(); err == nil {
+			return nil
+		} else {
+			lastErr = err
+			if attempt < maxAttempts && isRetryable(err) {
+				log.Warn().Err(err).Int("attempt", attempt).Dur("retry_in", delay).Msg("errore transitorio, riprovo")
+				time.Sleep(delay)
+				delay *= 2
+				continue
+			}
+			return err
+		}
 	}
-	subOrganization, err := api.CreateSubOrganization(ctx, organizationId, createSubOrgInput)
-	if err != nil {
+	return fmt.Errorf("max tentativi superati: %w", lastErr)
+}
+
+// createSubOrg crea una sub-org e ne imposta i limiti a illimitato.
+// delay è il tempo minimo di attesa prima di ogni chiamata HTTP: serve a
+// evitare di saturare il rate limiter dell'API anche con pochi worker.
+func createSubOrg(ctx context.Context, organizationId int64, delay time.Duration) (*api.CreateOrganizationOutDTO, error) {
+	// Step 1: crea la sub-org con retry su errori transitori.
+	// Il delay precede ogni tentativo: anche i retry rispettano il throttle.
+	// Ogni tentativo genera un nome nuovo per evitare duplicati nel caso in cui
+	// la richiesta HTTP sia arrivata al server ma la risposta sia andata persa.
+	var subOrganization *api.CreateOrganizationOutDTO
+	if err := withRetry(func() error {
+		time.Sleep(delay)
+		var e error
+		subOrganization, e = api.CreateSubOrganization(ctx, organizationId, api.CreateOrganizationInDTO{
+			Name: utils.RandomName(),
+		})
+		return e
+	}); err != nil {
 		return nil, err
 	}
-	err = api.SetAllLimitToUnlimited(ctx, subOrganization.ResourceID)
-	if err != nil {
+
+	// Step 2: imposta i limiti con retry separato.
+	// La org esiste già: non c'è rischio di duplicati in caso di nuovo tentativo.
+	if err := withRetry(func() error {
+		time.Sleep(delay)
+		return api.SetAllLimitToUnlimited(ctx, subOrganization.ResourceID, delay)
+	}); err != nil {
 		return nil, err
 	}
-	return subOrganization, err
+
+	return subOrganization, nil
 }

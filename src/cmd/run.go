@@ -6,11 +6,14 @@ import (
 	"corvina/corvina-seed/src/seed/dto"
 	"corvina/corvina-seed/src/utils"
 	"errors"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
 func Run(ctx context.Context) error {
+
+	utils.PrintlnBlue("Started at: " + time.Now().Format("2006-01-02 15:04:05"))
 
 	origin := ctx.Value(utils.OriginKey).(string)
 	log.Debug().Str("origin", origin).Msg("")
@@ -60,6 +63,29 @@ func Run(ctx context.Context) error {
 	seedOrgName, _ := ctx.Value(utils.SeedOrgName).(string)
 	log.Debug().Str("seed org name", seedOrgName).Msg("")
 
+	orgWorkers, err := takeCountFromCtx(ctx, utils.OrgWorkers)
+	if err != nil {
+		return err
+	}
+	// Default a 1 worker: serializza completamente le chiamate così il rate
+	// limiter del server non viene mai saturato. Aumentare solo su ambienti
+	// con rate limit più alto e confermato empiricamente.
+	if orgWorkers == 0 {
+		orgWorkers = 1
+	}
+	log.Debug().Int64("org workers", orgWorkers).Msg("")
+
+	requestDelayMs, err := takeCountFromCtx(ctx, utils.RequestDelayMs)
+	if err != nil {
+		return err
+	}
+	// Default a 200ms: con 3 worker equivale a ~15 req/s, abbondantemente
+	// sotto il rate limit tipico e sufficiente per alberi di centinaia di org.
+	if requestDelayMs == 0 {
+		requestDelayMs = 200
+	}
+	log.Debug().Int64("request delay ms", requestDelayMs).Msg("")
+
 	executeInput := dto.ExecuteInDTO{
 		DeviceCount:           deviceCount,
 		DeviceGroupCount:      deviceGroupCount,
@@ -69,6 +95,8 @@ func Run(ctx context.Context) error {
 		OrganizationTreeDepth: organizationTreeDepth,
 		UserCount:             userCount,
 		SeedOrgName:           seedOrgName,
+		OrgWorkers:            orgWorkers,
+		RequestDelayMs:        requestDelayMs,
 	}
 
 	if !atLeastOneCountIsProvided(executeInput) {

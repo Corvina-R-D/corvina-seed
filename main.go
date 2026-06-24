@@ -141,6 +141,8 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.OrganizationTreeDepth, c.Int64("organization-tree-depth"))
 				c.Context = context.WithValue(c.Context, utils.UserCount, c.Int64("user-count"))
 				c.Context = context.WithValue(c.Context, utils.SeedOrgName, c.String("seed-org-name"))
+				c.Context = context.WithValue(c.Context, utils.OrgWorkers, c.Int64("org-workers"))
+				c.Context = context.WithValue(c.Context, utils.RequestDelayMs, c.Int64("request-delay-ms"))
 
 				return cmd.Run(c.Context)
 			},
@@ -200,6 +202,18 @@ func main() {
 					Name:    "seed-org-name",
 					Aliases: []string{"son"},
 					Usage:   "Name of a new sub-organization to create first; all sub-orgs, users and devices are placed inside it. The resource_id is printed on creation for later reuse with --org-resource-id.",
+				},
+				&cli.Int64Flag{
+					Name:        "org-workers",
+					Aliases:     []string{"ow"},
+					Usage:       "Number of concurrent goroutines used to build the organization tree. Lower values reduce database pressure (recommended: 3 for minikube, up to 10 for production).",
+					DefaultText: "3",
+				},
+				&cli.Int64Flag{
+					Name:        "request-delay-ms",
+					Aliases:     []string{"rd"},
+					Usage:       "Minimum delay in milliseconds between each API call. Prevents hitting the server-side rate limiter (429). With 3 workers and 200ms delay the effective throughput is ~15 req/s.",
+					DefaultText: "200",
 				},
 				licenseManagerKeycloakClientFlags[0],
 				licenseManagerKeycloakClientFlags[1],

@@ -64,6 +64,49 @@ npx @corvina/corvina-seed@latest run \
   -otd 1
 ```
 
+### Large-scale seeding: org tree + users + devices ###
+
+The following parameters allow you to create a large organization tree and populate it with users and devices in a single run.
+
+| Flag | Alias | Default | Description |
+| ---- | ----- | ------- | ----------- |
+| `--seed-org-name` | `-son` | — | Creates a named container org first. All sub-orgs, devices and users are placed inside it. The `resource_id` is printed on creation so it can be reused with `--org-resource-id` in later runs. |
+| `--organization-count` | `-org` | — | Number of child orgs at each level of the tree. |
+| `--organization-tree-depth` | `-otd` | `1` | Depth of the org tree. Total orgs = sum of `organization-count^i` for i in 0..depth. |
+| `--user-count` | `-u` | — | Number of users to create. All users are created in the root org (which has a Keycloak realm configured); sub-orgs created by this tool do not support user creation directly. |
+| `--device-count` | `-d` | — | Number of devices to create, distributed round-robin across all created sub-orgs. Pass `--each-device-has-mapping=false` to skip the Elasticsearch mapping step and dramatically speed up bulk creation. |
+| `--org-workers` | `-ow` | `1` | Number of concurrent goroutines used to build the org tree. Higher values speed up tree creation but increase database pressure. Start at `1` and increase gradually; watch for `500 JPA EntityManager` errors as the sign to stop. |
+| `--request-delay-ms` | `-rd` | `200` | Minimum delay (ms) between API calls. Prevents hitting the server-side rate limiter (429). With 1 worker and 200 ms the effective throughput is ~5 req/s; with 5 workers ~25 req/s. |
+
+**Example — create a container org with a 3×5 tree (364 orgs), 1000 users and 1000 devices:**
+
+```bash
+npx @corvina/corvina-seed@latest run \
+  --origin https://app.corvina.mk \
+  -ko https://auth.corvina.mk \
+  -kc corvina-core-keycloak-admin-client \
+  -ks password \
+  -lmc corvina-core-license-manager-admin-client \
+  -lms password \
+  --admin-user admin@exor \
+  -orgid exor \
+  --seed-org-name "my-test-env" \
+  --organization-count 3 \
+  --organization-tree-depth 5 \
+  --user-count 1000 \
+  --device-count 1000 \
+  --each-device-has-mapping=false \
+  --org-workers 5 \
+  --request-delay-ms 50
+```
+
+After the run, the seed org `resource_id` (e.g. `exor.my-test-env`) is printed to stdout.
+Use it with `--org-resource-id` in subsequent runs to add more entities to the same tree without recreating it.
+
+> **Note on device mapping:** `--each-device-has-mapping` defaults to `true`, which triggers an Elasticsearch indexing step for every device. When creating hundreds or thousands of devices, pass `--each-device-has-mapping=false` to skip this and avoid timeouts from the mapping service.
+>
+> **Note on user creation:** users are created in the root org (e.g. `exor`) because only it has a Keycloak realm configured. Sub-orgs created by this tool do not have a hostname and therefore cannot host users directly.
+
 ### master-token ###
 
 Echo the access token of the keycloak admin

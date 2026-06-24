@@ -9,4 +9,6 @@ type ExecuteInDTO struct {
 	OrganizationTreeDepth int64
 	UserCount             int64  // utenti da distribuire sull'albero di org
 	SeedOrgName           string // nome della org contenitore da creare come primo passo
+	OrgWorkers            int64  // goroutine concorrenti per la creazione dell'albero (default 3)
+	RequestDelayMs        int64  // pausa minima in ms tra ogni chiamata API (default 200, evita il rate limiter)
 }
