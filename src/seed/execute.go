@@ -20,6 +20,10 @@ func Execute(ctx context.Context, input *dto.ExecuteInDTO) error {
 
 	log.Info().Interface("organization", organization).Msg("Organization retrieved")
 
+	if input.RandomDistribution {
+		return ExecuteRandomDistribution(ctx, input, organization)
+	}
+
 	err = createDeviceGroups(ctx, input, organization)
 	if err != nil {
 		return err

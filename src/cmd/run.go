@@ -50,6 +50,15 @@ func Run(ctx context.Context) error {
 	}
 	log.Debug().Int64("organization tree depth", organizationTreeDepth).Msg("")
 
+	maxChildren, err := takeCountFromCtx(ctx, utils.MaxChildren)
+	if err != nil {
+		return err
+	}
+	log.Debug().Int64("max children", maxChildren).Msg("")
+
+	randomDistribution := utils.CtxValueOrDefault(ctx, utils.RandomDistribution, false)
+	log.Debug().Bool("random distribution", randomDistribution).Msg("")
+
 	executeInput := dto.ExecuteInDTO{
 		DeviceCount:           deviceCount,
 		DeviceGroupCount:      deviceGroupCount,
@@ -57,6 +66,8 @@ func Run(ctx context.Context) error {
 		ServiceAccountCount:   serviceAccountCount,
 		OrganizationCount:     organizationCount,
 		OrganizationTreeDepth: organizationTreeDepth,
+		MaxChildren:           maxChildren,
+		RandomDistribution:    randomDistribution,
 	}
 
 	if !atLeastOneCountIsProvided(executeInput) {

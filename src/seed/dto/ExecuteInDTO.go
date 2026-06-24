@@ -7,4 +7,6 @@ type ExecuteInDTO struct {
 	ServiceAccountCount   int64
 	OrganizationCount     int64
 	OrganizationTreeDepth int64
+	MaxChildren           int64
+	RandomDistribution    bool
 }

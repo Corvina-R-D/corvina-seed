@@ -80,12 +80,27 @@ var orgResourceIdFlag *cli.StringFlag = &cli.StringFlag{
 	Usage:   "Resource ID of the organization to create entities in (only needed if there are more than one organization under the admin user)",
 }
 
+var realmFlag *cli.StringFlag = &cli.StringFlag{
+	Name:    "realm",
+	Aliases: []string{"r"},
+	Usage:   "Keycloak realm the admin user belongs to. Defaults to the domain part of --admin-user (e.g. admin@exor -> exor), which only matches local/minikube; on real clusters pass the actual realm explicitly",
+}
+
 func getDomainFromOrigin(origin string) string {
 	return strings.Replace(origin, "https://app.", "", 1)
 }
 
 func getUserRealmFromAdminUser(adminUser string) string {
 	return strings.Split(adminUser, "@")[1]
+}
+
+// resolveUserRealm returns the explicit --realm flag when provided, otherwise it
+// falls back to deriving the realm from the admin user (local/minikube convention).
+func resolveUserRealm(c *cli.Context) string {
+	if realm := c.String("realm"); realm != "" {
+		return realm
+	}
+	return getUserRealmFromAdminUser(c.String("admin-user"))
 }
 
 func main() {
@@ -128,7 +143,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.LicenseManagerClientSecret, c.String("license-manager-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakOrigin, c.String("keycloak-origin"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
-				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
+				c.Context = context.WithValue(c.Context, utils.UserRealm, resolveUserRealm(c))
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.DeviceCount, c.Int64("device-count"))
@@ -139,6 +154,9 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.ServiceAccountCount, c.Int64("service-account-count"))
 				c.Context = context.WithValue(c.Context, utils.OrganizationCount, c.Int64("organization-count"))
 				c.Context = context.WithValue(c.Context, utils.OrganizationTreeDepth, c.Int64("organization-tree-depth"))
+				c.Context = context.WithValue(c.Context, utils.MaxChildren, c.Int64("max-children"))
+				c.Context = context.WithValue(c.Context, utils.RandomDistribution, c.Bool("random-distribution"))
+				c.Context = context.WithValue(c.Context, utils.OrgNamePrefix, c.String("name-prefix"))
 
 				return cmd.Run(c.Context)
 			},
@@ -149,6 +167,7 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
+				realmFlag,
 				orgResourceIdFlag,
 				&cli.Int64Flag{
 					Name:    "model-count",
@@ -188,6 +207,25 @@ func main() {
 					Usage:       "Depth of the organization tree to create in the admin user organization",
 					DefaultText: "1",
 					Value:       1,
+				},
+				&cli.Int64Flag{
+					Name:        "max-children",
+					Aliases:     []string{"mc"},
+					Usage:       "With --random-distribution, the max number of sub organizations each node can get (a random value in [0, max-children]); only --organization-count orgs are created at the first level, so the tree grows linearly instead of exploding",
+					DefaultText: "3",
+					Value:       3,
+				},
+				&cli.BoolFlag{
+					Name:    "random-distribution",
+					Aliases: []string{"rnd"},
+					Usage:   "Build an irregular, randomly shaped organization tree (N top-level orgs, random branching up to the given depth) and scatter the devices randomly across all created organizations and the root",
+				},
+				&cli.StringFlag{
+					Name:        "name-prefix",
+					Aliases:     []string{"np"},
+					Usage:       "Prefix added to the name of every organization created by this CLI",
+					DefaultText: "seed-",
+					Value:       "seed-",
 				},
 				licenseManagerKeycloakClientFlags[0],
 				licenseManagerKeycloakClientFlags[1],
@@ -229,7 +267,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
-				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
+				c.Context = context.WithValue(c.Context, utils.UserRealm, resolveUserRealm(c))
 
 				return cmd.AdminToken(c.Context)
 			},
@@ -240,6 +278,7 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
+				realmFlag,
 			},
 		},
 		{
@@ -257,7 +296,7 @@ func main() {
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientId, c.String("keycloak-master-client-id"))
 				c.Context = context.WithValue(c.Context, utils.KeycloakMasterClientSecret, c.String("keycloak-master-client-secret"))
 				c.Context = context.WithValue(c.Context, utils.AdminUserKey, c.String("admin-user"))
-				c.Context = context.WithValue(c.Context, utils.UserRealm, getUserRealmFromAdminUser(c.String("admin-user")))
+				c.Context = context.WithValue(c.Context, utils.UserRealm, resolveUserRealm(c))
 				c.Context = context.WithValue(c.Context, utils.OrgResourceId, c.String("org-resource-id"))
 				c.Context = context.WithValue(c.Context, utils.LicenseHostKey, "https://app."+domain+"/svc/license")
 				c.Context = context.WithValue(c.Context, utils.LicenseManagerClientId, c.String("license-manager-client-id"))
@@ -273,6 +312,7 @@ func main() {
 				keycloakFlags[1],
 				keycloakFlags[2],
 				adminUserFlag,
+				realmFlag,
 				orgResourceIdFlag,
 				licenseManagerKeycloakClientFlags[0],
 				licenseManagerKeycloakClientFlags[1],

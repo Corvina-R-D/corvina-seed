@@ -64,6 +64,58 @@ npx @corvina/corvina-seed@latest run \
   -otd 1
 ```
 
+### Populate with a random organization tree ###
+
+Add `--random-distribution` (`-rnd`) to build an irregular, randomly shaped tree
+of organizations and scatter the devices randomly across all created
+organizations (and the root):
+
+- `--organization-count` (`-org`) organizations are created at the **first
+  level** under the given org;
+- then each organization gets a *random* number of children (between `0` and
+  `--max-children`, `-mc`, default `3`) until `--organization-tree-depth`
+  (`-otd`) is reached. Because the branching factor is `--max-children` and not
+  `--organization-count`, the tree grows roughly linearly instead of exploding
+  as `org^otd` (e.g. `-org 100 -otd 3` without this would create hundreds of
+  thousands of orgs);
+- `--device-count` (`-d`) devices are each assigned to a randomly picked
+  organization among all the created ones plus the root;
+- created organizations are named `<--name-prefix><random>`; the prefix
+  defaults to `seed-` and can be changed with `--name-prefix` (`-np`).
+
+`--org-resource-id` can point to a **sub organization**, not only a root one.
+Resource ids are hierarchical (e.g. `exor.testdavide3`): you can pass the full id
+or, when you have a single root organization, just the short name
+(`testdavide3`) and it will be resolved under that root.
+
+```bash
+npx @corvina/corvina-seed@latest run \
+  --origin https://app.dev.corvina.cloud \
+  -ko https://auth.dev.corvina.cloud \
+  -kc <keycloak-master-client-id> \
+  -ks <keycloak-master-client-secret> \
+  -lmc <license-manager-client-id> \
+  -lms <license-manager-client-secret> \
+  --admin-user <admin-user> \
+  --realm <realm> \
+  --org-resource-id <orgResourceId> \
+  --random-distribution \
+  -org 5 \
+  -otd 3 \
+  -d 100
+```
+
+> **Note:** `--realm` is the Keycloak realm the admin user belongs to. By default
+> it is derived from the domain part of `--admin-user` (e.g. `admin@exor` ->
+> `exor`), which only matches local/minikube. On real clusters pass it
+> explicitly; you can read it from the web portal URL once logged in
+> (`https://<realm>.app.<domain>/`).
+
+> **Note:** device creation relies on the license manager client
+> (`--license-manager-client-id` / `--license-manager-client-secret`) to issue
+> and activate device licenses, so those credentials must be valid on the target
+> cluster too.
+
 ### master-token ###
 
 Echo the access token of the keycloak admin
