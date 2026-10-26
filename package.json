@@ -3,7 +3,7 @@
   "version": "1.5.0",
   "description": "Command line tools to create entities in corvina in bulk",
   "bin": {
-    "create-corvina-app": "/bin/index.js"
+    "create-corvina-app": "bin/index.js"
   },
   "files": [
     "/build",
@@ -12,13 +12,16 @@
   "scripts": {
     "clean": "rm -rf main && rm -rf build/",
     "build": "./cross-arch-compiler.sh",
-    "deploy": "npm publish --access public",
-    "prepublish": "npm run clean && npm run build"
+    "test": "go test ./..."
   },
   "keywords": [
     "corvina"
   ],
   "homepage": "https://github.com/Corvina-R-D/corvina-seed",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Corvina-R-D/corvina-seed.git"
+  },
   "author": "corvina.io",
   "license": "ISC"
 }
