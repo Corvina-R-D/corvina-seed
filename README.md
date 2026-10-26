@@ -110,9 +110,4 @@ go run main.go
 
 ## DEPLOY ##
 
-To deploy the CLI, you need to run the following command:
-
-```bash
-npm run prepublish
-npm run deploy
-```
+Create a GitHub release with tag `X.Y.Z` (or `X.Y.Z-beta.N` marked as pre-release, published under the `beta` dist-tag). The [Publish](.github/workflows/publish.yaml) workflow runs the Go tests, cross-compiles the CLI, publishes it on npm and bumps `version` in `package.json` on `master`.
