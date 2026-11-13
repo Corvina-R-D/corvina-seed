@@ -52,3 +52,6 @@ Thumbs.db
 # folders create by device-authz command
 corvina.mk.*/
 *-pki/
+
+# Claude Code settings (may contain credentials)
+.claude/settings*.json
